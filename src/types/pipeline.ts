@@ -1,9 +1,13 @@
+import type { LLMConfig } from './config.js';
+
 export interface ConvertOptions {
   out: string;
   typescript: boolean;
   strict: boolean;
   split: boolean;
-  cssMode: 'module';
+  cssMode: 'module' | 'scoped' | 'inline' | 'global';
+  /** LLM review configuration per D-10 */
+  llm?: LLMConfig;
 }
 
 export interface PipelineContext {
@@ -21,6 +25,15 @@ export interface PipelineContext {
   repeatedPatterns?: Map<string, import('domhandler').Element[]>;
   components?: ComponentOutput[];
   cssFiles?: CSSFile[];
+
+  // Phase 4: LLM Integration
+  llmResult?: {
+    approved: boolean;
+    boundary_changes: Array<{ component_id: string; action: 'confirm' | 'reject' | 'modify'; reason: string }>;
+    naming_suggestions: Array<{ original: string; suggested: string; rationale: string }>;
+    cleanup_hints: string[];
+    _fallback?: boolean;
+  };
 }
 
 export interface PipelineStep {
