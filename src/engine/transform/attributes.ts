@@ -121,7 +121,9 @@ export function mapAttribute(name: string, value: string): MappedAttribute {
   // 1. Check boolean attributes first (some are also in renames: readonly)
   if (BOOLEAN_ATTRIBUTES.has(lowerName)) {
     const renamed = HTML_TO_JSX_RENAMES[lowerName];
-    return { name: renamed || lowerName, value: true };
+    // 只有值为"false"字符串时才返回false，否则返回true
+    const boolValue = value === 'false' ? false : true;
+    return { name: renamed || lowerName, value: boolValue };
   }
 
   // 2. Check renamed attributes (class → className, for → htmlFor, etc.)

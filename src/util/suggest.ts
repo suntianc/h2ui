@@ -53,9 +53,15 @@ export function suggestSimilarFiles(inputFile: string, directory: string): strin
     return [];
   }
 
-  // Filter to same extension and compute scores
+  // Normalize extension: treat .htm and .html as equivalent
+  const normalizedExt = ext === '.htm' ? '.html' : ext === '.html' ? '.htm' : ext;
+
+  // Filter to same extension (with .htm/.html equivalence) and compute scores
   const scored = entries
-    .filter((entry) => path.extname(entry) === ext)
+    .filter((entry) => {
+      const entryExt = path.extname(entry);
+      return entryExt === ext || entryExt === normalizedExt;
+    })
     .map((entry) => ({
       name: entry,
       score: levenshtein(inputBasename, entry),

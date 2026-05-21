@@ -13,7 +13,9 @@ function vendorPrefixToCamelCase(prop: string): string {
   for (const [prefix, replacement] of Object.entries(VENDOR_PREFIX_MAP)) {
     if (prop.startsWith(prefix)) {
       const rest = prop.slice(prefix.length);
-      return replacement + hyphenToCamelCase(rest);
+      // Capitalize first letter of rest for proper camelCase
+      const capitalized = rest.charAt(0).toUpperCase() + rest.slice(1);
+      return replacement + hyphenToCamelCase(capitalized);
     }
   }
   return hyphenToCamelCase(prop);
@@ -25,7 +27,7 @@ function vendorPrefixToCamelCase(prop: string): string {
  */
 export function parseInlineStyle(cssString: string): Record<string, string> | undefined {
   if (!cssString || !cssString.trim()) {
-    return undefined;
+    return {};
   }
 
   const result: Record<string, string> = {};

@@ -4,6 +4,7 @@ import type { PipelineStep, PipelineContext, ComponentNode } from '../../types/p
 import { isSemanticTag, tagToComponentName, getMeaningfulClasses } from './semantic.js';
 import { findRepeatedPatterns, type DetectedPattern } from './signature.js';
 import { showComponentTree } from '../../cli/output.js';
+import { flattenTree } from '../../util/tree.js';
 
 /**
  * Build a component tree by recursively walking DOM children.
@@ -69,17 +70,6 @@ function buildComponentTree(
   };
 
   return node;
-}
-
-/**
- * Flatten a component tree into a list.
- */
-function flattenTree(node: ComponentNode): ComponentNode[] {
-  const result: ComponentNode[] = [node];
-  for (const child of node.children) {
-    result.push(...flattenTree(child));
-  }
-  return result;
 }
 
 export const splitStep: PipelineStep = {

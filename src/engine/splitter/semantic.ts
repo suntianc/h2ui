@@ -37,7 +37,7 @@ export function tagToComponentName(tag: string, classes: string[]): string {
     return `${classPart}${tagPart}`;
   }
 
-  // Named tag mapping
+  // Named tag mapping - explicit mappings for tags whose default PascalCase would be unclear
   const TAG_NAMES: Record<string, string> = {
     header: 'Header',
     nav: 'Navigation',
@@ -45,6 +45,13 @@ export function tagToComponentName(tag: string, classes: string[]): string {
     section: 'Section',
     article: 'Article',
     footer: 'Footer',
+    aside: 'Aside',
+    figure: 'Figure',
+    figcaption: 'Figcaption',
+    time: 'Time',
+    address: 'Address',
+    details: 'Details',
+    summary: 'Summary',
   };
 
   return TAG_NAMES[tag] || (tag.charAt(0).toUpperCase() + tag.slice(1));

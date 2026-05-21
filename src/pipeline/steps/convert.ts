@@ -5,6 +5,7 @@ import { mapAllAttributes } from '../../engine/transform/attributes.js';
 import { parseInlineStyle } from '../../engine/transform/style.js';
 import { isVoidElement, formatJsxTag } from '../../engine/transform/elements.js';
 import { toPascalCase } from '../../util/file.js';
+import { flattenTree } from '../../util/tree.js';
 
 /**
  * Generate JSX code string from a Cheerio AST root node.
@@ -151,13 +152,6 @@ function generateComponent(
 }
 
 // ── Phase 2: Per-component generation ──
-
-/**
- * Flatten a component tree into a flat list (top-down).
- */
-function flattenTree(node: ComponentNode): ComponentNode[] {
-  return [node, ...node.children.flatMap(flattenTree)];
-}
 
 /**
  * Generate code for a single child component.

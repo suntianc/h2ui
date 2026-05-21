@@ -12,8 +12,9 @@ async function formatCode(code: string, isTypescript: boolean): Promise<string> 
       trailingComma: 'es5',
       printWidth: 100,
     });
-  } catch {
+  } catch (err) {
     // Fallback to unformatted if Prettier fails
+    console.warn(`Prettier formatting failed: ${(err as Error).message}. Using unformatted code.`);
     return code;
   }
 }
