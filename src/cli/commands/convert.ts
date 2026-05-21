@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import ora from 'ora';
 import type { ConvertOptions } from '../../types/pipeline.js';
 import type { H2uiConfig } from '../../types/config.js';
 import { DEFAULT_OPTIONS } from '../../config/defaults.js';
-import { showError, showSuccess, showWarningSummary } from '../output.js';
+import { showError, showSuccess, showWarningSummary, showComponentTree } from '../output.js';
 import { suggestSimilarFiles } from '../../util/suggest.js';
 
 export async function convertCommand(
@@ -39,6 +40,8 @@ export async function convertCommand(
   // Resolve paths
   const inputPath = path.resolve(file);
   const outputDir = path.resolve(mergedConfig.out);
+
+  const spinner = ora('Parsing and converting HTML...').start();
 
   // Dynamic imports so CLI works without pipeline modules
   const { Pipeline } = await import('../../pipeline/index.js');
@@ -77,6 +80,7 @@ export async function convertCommand(
 
   // Handle strict mode
   if (mergedConfig.strict && ctx.warnings.length > 0) {
+    spinner.stop();
     showWarningSummary(ctx.warnings);
     showError('Strict mode: warnings promoted to errors');
     process.exit(1);
@@ -84,6 +88,7 @@ export async function convertCommand(
 
   // Report errors
   if (ctx.errors.length > 0) {
+    spinner.stop();
     for (const err of ctx.errors) {
       showError(err);
     }
@@ -96,14 +101,23 @@ export async function convertCommand(
     process.exit(1);
   }
 
+  // Success
+  spinner.stop();
+
   // Show warnings
   if (ctx.warnings.length > 0) {
     showWarningSummary(ctx.warnings);
   }
 
-  // Show success
+  // Show success with enhanced output
   if (ctx.outputPath) {
-    showSuccess(ctx.outputPath);
+    if (mergedConfig.split && ctx.componentTree && ctx.components) {
+      const fileCount = ctx.components.length;
+      console.log(`\n\x1b[32m✓\x1b[0m Wrote ${fileCount} files to ${mergedConfig.out}`);
+      showComponentTree(ctx.componentTree);
+    } else {
+      showSuccess(ctx.outputPath);
+    }
   } else {
     showError('No output was generated');
     process.exit(1);
