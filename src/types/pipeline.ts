@@ -2,7 +2,8 @@ export interface ConvertOptions {
   out: string;
   typescript: boolean;
   strict: boolean;
-  cssMode?: 'module';
+  split: boolean;
+  cssMode: 'module';
 }
 
 export interface PipelineContext {

@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { showBanner } from './output.js';
 import { convertCommand } from './commands/convert.js';
 import { initCommand } from './commands/init.js';
+import { loadConfig } from '../config/loader.js';
 
 const program = new Command();
 
@@ -19,9 +20,10 @@ program
   .option('--no-typescript', 'output .jsx instead of .tsx')
   .option('--no-split', 'disable component splitting (single-file output)')
   .option('--strict', 'promote all warnings to errors')
-  .action(async (file: string, options: { out: string; typescript: boolean; strict: boolean; split: boolean }) => {
+  .action(async (file: string, options: { out?: string; typescript?: boolean; strict?: boolean; split?: boolean }) => {
     showBanner();
-    await convertCommand(file, options);
+    const { config: configFile } = await loadConfig();
+    await convertCommand(file, options, configFile);
   });
 
 program
