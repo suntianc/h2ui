@@ -39,8 +39,10 @@
     "@types/css-tree": "^2.3.11",
     "@types/node": "^25.9.1",
     "@types/ora": "^3.1.0",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.22.3",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "ws": "^8.20.1"
   }
 }

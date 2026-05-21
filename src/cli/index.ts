@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { showBanner } from './output.js';
 import { convertCommand } from './commands/convert.js';
 import { initCommand } from './commands/init.js';
+import { previewCommand } from './commands/preview.js';
 import { loadConfig } from '../config/loader.js';
 
 const program = new Command();
@@ -38,6 +39,8 @@ program
     showBanner();
     await initCommand(options);
   });
+
+program.addCommand(previewCommand);
 
 if (!process.argv.slice(2).length) {
   program.outputHelp();
