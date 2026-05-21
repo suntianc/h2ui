@@ -1,10 +1,10 @@
-import path from 'node:path';
 import type { CheerioAPI } from 'cheerio';
 import type { AnyNode, Element, Text } from 'domhandler';
 import type { PipelineStep, PipelineContext } from '../../types/pipeline.js';
 import { mapAllAttributes } from '../../engine/transform/attributes.js';
 import { parseInlineStyle } from '../../engine/transform/style.js';
 import { isVoidElement, formatJsxTag } from '../../engine/transform/elements.js';
+import { toPascalCase } from '../../util/file.js';
 
 /**
  * Generate JSX code string from a Cheerio AST root node.
@@ -162,9 +162,7 @@ export const convertStep: PipelineStep = {
     }
 
     try {
-      const componentName = ctx.outputPath
-        ? path.basename(ctx.outputPath, path.extname(ctx.outputPath))
-        : 'Component';
+      const componentName = toPascalCase(ctx.filePath);
 
       const code = generateComponent(ctx.$, componentName, ctx.options.typescript, newCtx.warnings);
       return { ...newCtx, code };
