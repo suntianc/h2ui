@@ -112,7 +112,7 @@
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — SPL-06 + LLM foundation (config types, provider factories, token utilities, Zod schemas)
+- [x] 04-01-PLAN.md — SPL-06 + LLM foundation (config types, provider factories, token utilities, Zod schemas)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
