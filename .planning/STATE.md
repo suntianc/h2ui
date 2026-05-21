@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 01 of 2 (core cli jsx)
 status: planning
-stopped_at: Phase 2 execution started
-last_updated: "2026-05-21T09:19:00.806Z"
+stopped_at: All 3 Phase 2 plans executed
+last_updated: "2026-05-21T09:21:08.959Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -22,17 +22,35 @@ progress:
 | Phase | Status | Plans | Progress |
 | ----- | ------ | ----- | -------- |
 | 1     | ✓      | 2/2   | 100%     |
-| 2     | ◆      | 0/3   | 0%       |
+| 2     | ◆      | 3/3   | 100%     |
 | 3     | ○      | 0/1   | 0%       |
 | 4     | ○      | 0/2   | 0%       |
 
 **Current phase:** 01 of 2 (core cli jsx)
 
-## Current Execution
+## Execution Summary
 
-### Wave 1: Pipeline Infrastructure + Multi-Component Output
+### Plan 01: Pipeline Infrastructure + Multi-Component Output ✅
 
-### Wave 2: Split Engine + CSS Engine
+- Extended PipelineContext with ComponentNode, ComponentOutput, CSSFile types
+- Refactored convert step for per-component JSX generation
+- Refactored generate step for multi-file output (.tsx + .module.css)
+- Added `showComponentTree()` console display
+- Added `--no-split` CLI flag
+- Created test fixtures for multi-component and repeated cards
+
+### Plan 02: Split Engine ✅
+
+- Semantic tag detection (header, nav, main, section, article, footer)
+- Structure signature engine for repeated DOM pattern detection
+- Component tree builder with semantic boundary splitting
+
+### Plan 03: CSS Engine ✅
+
+- Inline style parsing with inheritable property filtering
+- CSS shorthand condensation (padding, margin, border)
+- CSS Module generator + shared style deduplication
+- `<style>` tag extraction
 
 ## Requirements Status
 
@@ -40,17 +58,15 @@ progress:
 | ---- | ----- | ------- |
 | CLI | 6 | 0 |
 | JSX/TSX | 11 | 0 |
-| Splitting | 6 | 6 |
-| CSS | 7 | 7 |
+| Splitting | 6 | 0 |
+| CSS | 7 | 0 |
 | Config | 2 | 1 |
-| **Total** | **32** | **14** |
-
-**Phase 1 requirements:** All 18 requirements addressed
+| **Total** | **32** | **1** |
 
 ## Last Session
 
-- **Stopped at:** Phase 2 execution started
-- **Resume:** Continue with wave 1 execution
+- **Stopped at:** All 3 Phase 2 plans executed
+- **Resume:** Verify phase goal → update roadmap → proceed to Phase 3
 
 ---
 *Last updated: 2026-05-21*

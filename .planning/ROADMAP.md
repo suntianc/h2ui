@@ -33,7 +33,7 @@
 
 ---
 
-## Phase 2: Component Splitting + CSS Extraction
+## Phase 2: Component Splitting + CSS Extraction ✅ *(completed 2026-05-21)*
 
 **Goal:** Split HTML into component tree and extract styles to CSS Modules
 
@@ -56,7 +56,7 @@
 
 **Avoids pitfall:** Flat HTML output (Pitfall 3), Naive CSS extraction (Pitfall 2)
 
-**Stack additions:** css-tree, postcss
+**Stack additions:** css-tree
 
 ---
 
