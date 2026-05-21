@@ -318,12 +318,6 @@ function extractCssProperties($: CheerioAPI, el: Element): Record<string, string
     }
   }
 
-  // Recurse into children
-  $(el).children().each((_, child) => {
-    const childProps = extractCssProperties($, child as Element);
-    Object.assign(result, childProps);
-  });
-
   return result;
 }
 
