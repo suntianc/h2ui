@@ -88,13 +88,13 @@ export async function convertCommand(
     pipeline.addStep(convertStep);
   }
 
-  pipeline.addStep(generateStep);
-
-  // Add LLM review step if llm is configured
+  // Add LLM review step BEFORE generateStep so results can influence output
   if (llmConfig && llmConfig.mode !== 'off') {
     const { llmReviewStep } = await import('../../pipeline/steps/llm-review.js');
     pipeline.addStep(llmReviewStep);
   }
+
+  pipeline.addStep(generateStep);
 
   // Run pipeline
   const ctx = await pipeline.run({
