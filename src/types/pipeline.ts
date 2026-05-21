@@ -33,7 +33,7 @@ export interface PipelineContext {
     boundary_changes: Array<{ component_id: string; action: 'confirm' | 'reject' | 'modify'; reason: string }>;
     naming_suggestions: Array<{ original: string; suggested: string; rationale: string }>;
     cleanup_hints: string[];
-    _fallback?: boolean;
+    _fallback?: boolean | null; // null = LLM call failed, undefined = not set
   };
 }
 

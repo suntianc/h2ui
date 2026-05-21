@@ -33,8 +33,29 @@ Return ONLY valid JSON matching the provided schema. No markdown, no explanation
  * Build user content with rules engine output as JSON.
  */
 function buildUserContent(componentTree: ComponentNode): string {
-  const inputJson = JSON.stringify(componentTree);
+  const inputJson = stringifySafe(componentTree);
   return `Rules engine output:\n\`\`\`json\n${inputJson}\n\`\`\``;
+}
+
+/**
+ * JSON.stringify with circular reference handling.
+ * domhandler Element objects have parent pointers that cause serialization to fail.
+ */
+function stringifySafe(obj: unknown): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return undefined; // Remove circular reference
+      }
+      seen.add(value);
+    }
+    // Handle domhandler-specific circular props
+    if (key === 'parent' || key === 'next' || key === 'prev') {
+      return undefined;
+    }
+    return value;
+  });
 }
 
 /**
@@ -112,7 +133,8 @@ export async function runLLMReview(
   componentTree: ComponentNode,
   config: LLMConfig,
 ): Promise<ComponentReview> {
-  const inputJson = JSON.stringify(componentTree);
+  // Serialize with circular reference handling
+  const inputJson = stringifySafe(componentTree);
 
   // D-04: Display token estimate before call (display-only, no blocking)
   displayCostWarning(inputJson, config.model ?? 'gpt-4o-mini');
@@ -136,7 +158,7 @@ export async function runLLMReview(
       boundary_changes: [],
       naming_suggestions: [],
       cleanup_hints: [],
-      _fallback: true,
-    } as ComponentReview & { _fallback: boolean };
+      _fallback: null,
+    };
   }
 }
