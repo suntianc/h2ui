@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 01 of 2 (core cli jsx)
+current_phase: 01 of 3 (core cli jsx)
 status: planning
-stopped_at: All 3 Phase 2 plans executed
-last_updated: "2026-05-21T09:21:08.959Z"
+stopped_at: Phase 3 context gathered
+last_updated: "2026-05-21T09:31:50.122Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -22,35 +22,28 @@ progress:
 | Phase | Status | Plans | Progress |
 | ----- | ------ | ----- | -------- |
 | 1     | ✓      | 2/2   | 100%     |
-| 2     | ◆      | 3/3   | 100%     |
-| 3     | ○      | 0/1   | 0%       |
+| 2     | ✓      | 3/3   | 100%     |
+| 3     | ◆      | 0/1   | 0%       |
 | 4     | ○      | 0/2   | 0%       |
 
-**Current phase:** 01 of 2 (core cli jsx)
+**Current phase:** 01 of 3 (core cli jsx)
 
 ## Execution Summary
 
-### Plan 01: Pipeline Infrastructure + Multi-Component Output ✅
+### Phase 1: Core CLI + JSX Pipeline ✅
 
-- Extended PipelineContext with ComponentNode, ComponentOutput, CSSFile types
-- Refactored convert step for per-component JSX generation
-- Refactored generate step for multi-file output (.tsx + .module.css)
-- Added `showComponentTree()` console display
-- Added `--no-split` CLI flag
-- Created test fixtures for multi-component and repeated cards
+### Phase 2: Component Splitting + CSS Extraction ✅
 
-### Plan 02: Split Engine ✅
+### Phase 3: Configuration + Polish ◆ (planning)
 
-- Semantic tag detection (header, nav, main, section, article, footer)
-- Structure signature engine for repeated DOM pattern detection
-- Component tree builder with semantic boundary splitting
+Decisions captured:
 
-### Plan 03: CSS Engine ✅
-
-- Inline style parsing with inheritable property filtering
-- CSS shorthand condensation (padding, margin, border)
-- CSS Module generator + shared style deduplication
-- `<style>` tag extraction
+- cosmiconfig for config discovery
+- Config fields: out, typescript, strict, split, cssMode
+- ora spinner during conversion
+- Error suggestions: file similar matching + --help hints
+- JSON-only config format
+- h2ui init generates full scaffold with comments
 
 ## Requirements Status
 
@@ -65,8 +58,8 @@ progress:
 
 ## Last Session
 
-- **Stopped at:** All 3 Phase 2 plans executed
-- **Resume:** Verify phase goal → update roadmap → proceed to Phase 3
+- **Stopped at:** Phase 3 context gathered
+- **Resume:** Plan Phase 3 → execute Phase 3
 
 ---
 *Last updated: 2026-05-21*
