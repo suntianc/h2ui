@@ -1,10 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ConvertOptions } from '../../types/pipeline.js';
-import { Pipeline } from '../../pipeline/index.js';
-import { parseStep } from '../../pipeline/steps/parse.js';
-import { convertStep } from '../../pipeline/steps/convert.js';
-import { generateStep } from '../../pipeline/steps/generate.js';
 import { showError, showSuccess, showWarningSummary } from '../output.js';
 
 export async function convertCommand(
@@ -30,6 +26,12 @@ export async function convertCommand(
   // Resolve paths
   const inputPath = path.resolve(file);
   const outputDir = path.resolve(opts.out);
+
+  // Dynamic imports so CLI works without pipeline modules (Plan 02)
+  const { Pipeline } = await import('../../pipeline/index.js');
+  const { parseStep } = await import('../../pipeline/steps/parse.js');
+  const { convertStep } = await import('../../pipeline/steps/convert.js');
+  const { generateStep } = await import('../../pipeline/steps/generate.js');
 
   // Build pipeline
   const pipeline = new Pipeline();
