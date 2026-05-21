@@ -1,0 +1,37 @@
+{
+  "name": "h2ui",
+  "version": "1.0.0",
+  "description": "Convert HTML pages to React components",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "h2ui": "./bin/h2ui.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/cli/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "html",
+    "react",
+    "jsx",
+    "tsx",
+    "converter",
+    "cli"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "commander": "^12.1.0",
+    "prettier": "^3.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.3",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
