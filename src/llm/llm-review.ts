@@ -6,7 +6,6 @@ import { createOpenAIClient } from './providers/openai.js';
 import { createAnthropicClient } from './providers/anthropic.js';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { z } from 'zod';
 
 /**
  * Build system prompt per D-13~D-17 scope.
@@ -86,7 +85,7 @@ async function callAnthropic(
     messages: [
       { role: 'user', content: userContent },
     ],
-    format: zodOutputFormat(ComponentReviewSchema),
+    format: zodOutputFormat(ComponentReviewSchema as any),
     max_tokens: 1024,
   });
 
