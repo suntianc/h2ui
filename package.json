@@ -24,12 +24,16 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.97.1",
     "cheerio": "^1.2.0",
     "commander": "^12.1.0",
     "cosmiconfig": "^9.0.1",
     "css-tree": "^3.2.1",
+    "openai": "^6.38.0",
     "ora": "^9.4.0",
-    "prettier": "^3.8.3"
+    "prettier": "^3.8.3",
+    "tiktoken": "^1.0.22",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/css-tree": "^2.3.11",
