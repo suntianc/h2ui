@@ -15,9 +15,9 @@ export async function convertCommand(
     strict?: boolean;
     split?: boolean;
     llm?: boolean;
-    'llm-provider'?: string;
-    'llm-model'?: string;
-    'llm-mode'?: string;
+    llmProvider?: string;
+    llmModel?: string;
+    llmMode?: string;
   },
   configFile: Partial<H2uiConfig> = {},
 ): Promise<void> {
@@ -53,9 +53,9 @@ export async function convertCommand(
   let llmConfig: LLMConfig | undefined;
   if (options.llm || configFile.llm) {
     llmConfig = {
-      provider: (options['llm-provider'] ?? configFile.llm?.provider ?? DEFAULT_LLM_CONFIG.provider) as LLMConfig['provider'],
-      model: options['llm-model'] ?? configFile.llm?.model ?? DEFAULT_LLM_CONFIG.model,
-      mode: options['llm'] ? 'always' : ((options['llm-mode'] ?? configFile.llm?.mode ?? DEFAULT_LLM_CONFIG.mode) as LLMConfig['mode']),
+      provider: (options.llmProvider ?? configFile.llm?.provider ?? DEFAULT_LLM_CONFIG.provider) as LLMConfig['provider'],
+      model: options.llmModel ?? configFile.llm?.model ?? DEFAULT_LLM_CONFIG.model,
+      mode: (options.llmMode ?? (options.llm ? 'always' : configFile.llm?.mode ?? DEFAULT_LLM_CONFIG.mode)) as LLMConfig['mode'],
       baseURL: configFile.llm?.baseURL,
       apiKey: configFile.llm?.apiKey,
     };

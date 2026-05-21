@@ -24,7 +24,7 @@ program
   .option('--llm-provider <provider>', 'LLM provider: openai | anthropic | ollama')
   .option('--llm-model <model>', 'model name (e.g., gpt-4o-mini, claude-sonnet-4-7-20250514)')
   .option('--llm-mode <mode>', 'LLM mode: off | auto | always')
-  .action(async (file: string, options: { out?: string; typescript?: boolean; strict?: boolean; split?: boolean; llm?: boolean; 'llm-provider'?: string; 'llm-model'?: string; 'llm-mode'?: string }) => {
+  .action(async (file: string, options: { out?: string; typescript?: boolean; strict?: boolean; split?: boolean; llm?: boolean; llmProvider?: string; llmModel?: string; llmMode?: string }) => {
     showBanner();
     const { config: configFile } = await loadConfig();
     await convertCommand(file, options, configFile);
