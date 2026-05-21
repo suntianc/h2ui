@@ -6,6 +6,7 @@ import { createOpenAIClient } from './providers/openai.js';
 import { createAnthropicClient } from './providers/anthropic.js';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
+import { z } from 'zod';
 
 /**
  * Build system prompt per D-13~D-17 scope.
@@ -85,7 +86,7 @@ async function callAnthropic(
     messages: [
       { role: 'user', content: userContent },
     ],
-    format: zodOutputFormat(ComponentReviewSchema as any),
+    format: zodOutputFormat(ComponentReviewSchema),
     max_tokens: 1024,
   });
 
@@ -94,9 +95,12 @@ async function callAnthropic(
     throw new Error('No response from Anthropic');
   }
   // Anthropic returns content as array; first block should be the parsed JSON
+  if (!Array.isArray(result)) {
+    throw new Error(`Unexpected Anthropic response type: ${typeof result}`);
+  }
   const textBlock = result.find((b: any) => b.type === 'text');
   if (!textBlock) {
-    throw new Error('No text block in Anthropic response');
+    throw new Error(`No text block in Anthropic response. Content types: ${result.map((b: any) => b.type).join(', ')}`);
   }
   return JSON.parse(textBlock.text) as ComponentReview;
 }

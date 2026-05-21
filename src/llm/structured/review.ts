@@ -17,6 +17,7 @@ export const ComponentReviewSchema = z.object({
   boundary_changes: z.array(BoundaryChangeSchema),
   naming_suggestions: z.array(NamingSuggestionSchema),
   cleanup_hints: z.array(z.string().max(150)),
+  _fallback: z.boolean().optional(),
 });
 
 export type ComponentReview = z.infer<typeof ComponentReviewSchema>;
