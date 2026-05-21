@@ -92,7 +92,8 @@ export function cleanProperties(props: Record<string, string>): Record<string, s
   const result: Record<string, string> = {};
   for (const [key, value] of Object.entries(props)) {
     const trimmed = value.trim();
-    if (trimmed && trimmed !== 'initial' && trimmed !== 'inherit') {
+    // Only filter truly empty strings - preserve intentional values like 'auto', '0', 'normal'
+    if (trimmed !== '') {
       result[key] = trimmed;
     }
   }

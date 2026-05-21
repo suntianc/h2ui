@@ -56,17 +56,40 @@ export function extractSharedStyles(
     }
   }
 
-  // Find declarations used by 2+ components
-  const sharedDeclarations: Record<string, string> = {};
-  const sharedKeys = new Set<string>();
+  // Find declarations used by 2+ components with the SAME value
+  // Track all values per property to detect conflicts
+  const propToData = new Map<string, { value: string; keys: Set<string>; components: Set<string> }>();
 
   for (const [key, comps] of declFrequency) {
     if (comps.length >= 2) {
       const colonIdx = key.indexOf(':');
       const prop = key.slice(0, colonIdx);
       const value = key.slice(colonIdx + 1);
-      sharedDeclarations[prop] = value;
-      sharedKeys.add(key);
+
+      if (!propToData.has(prop)) {
+        propToData.set(prop, { value, keys: new Set([key]), components: new Set(comps) });
+      } else {
+        const data = propToData.get(prop)!;
+        if (data.value === value) {
+          // Same value, accumulate
+          data.keys.add(key);
+          comps.forEach(c => data.components.add(c));
+        } else {
+          // Conflicting value for same property - mark as conflict
+          data.value = '__CONFLICT__';
+        }
+      }
+    }
+  }
+
+  // Only include properties where all shared occurrences have the same value
+  const sharedDeclarations: Record<string, string> = {};
+  const sharedKeys = new Set<string>();
+
+  for (const [prop, data] of propToData) {
+    if (data.value !== '__CONFLICT__') {
+      sharedDeclarations[prop] = data.value;
+      data.keys.forEach(k => sharedKeys.add(k));
     }
   }
 
@@ -95,21 +118,4 @@ export function extractSharedStyles(
   });
 
   return { shared: sharedCSS, updatedComponents };
-}
-
-/**
- * Get the import statement for a component's CSS Module.
- */
-export function getCSSModuleImport(componentName: string, hasStyles: boolean): string {
-  if (!hasStyles) return '';
-  return `import styles from './${componentName}.module.css';\n`;
-}
-
-/**
- * Get the CSS Module class name usage for a component.
- */
-export function getClassNameBinding(componentName: string, hasStyles: boolean): string {
-  if (!hasStyles) return '';
-  const className = componentToClassName(componentName);
-  return `className={styles.${className}}`;
 }

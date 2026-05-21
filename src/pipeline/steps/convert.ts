@@ -189,8 +189,10 @@ function generateComponentCode(
 
   // Props interface for TypeScript
   if (isTypescript) {
+    lines.push('import type { ReactNode } from \'react\';');
+    lines.push('');
     lines.push('interface Props {');
-    lines.push('  children?: React.ReactNode;');
+    lines.push('  children?: ReactNode;');
     lines.push('}');
     lines.push('');
   }
@@ -257,8 +259,10 @@ function generateRootComponent(
   lines.push('');
 
   if (isTypescript) {
+    lines.push('import type { ReactNode } from \'react\';');
+    lines.push('');
     lines.push('interface Props {');
-    lines.push('  children?: React.ReactNode;');
+    lines.push('  children?: ReactNode;');
     lines.push('}');
     lines.push('');
   }
