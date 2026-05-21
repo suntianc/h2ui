@@ -76,3 +76,15 @@ export function getMeaningfulClasses($: CheerioAPI, el: Element): string[] {
     .filter(c => !EXCLUDED.has(c));
 }
 
+/**
+ * Check if a non-semantic div has a "distinct" class/ID pattern that warrants splitting.
+ * Per D-07: heuristic detection of class/ID patterns in non-semantic divs.
+ * Split if: ID present OR 2+ meaningful class tokens.
+ */
+export function hasDistinctPattern($: CheerioAPI, el: Element): boolean {
+  const id = $(el).attr('id');
+  if (id && id.trim().length > 0) return true;
+  const classes = getMeaningfulClasses($, el);
+  return classes.length >= 2;
+}
+

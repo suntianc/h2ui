@@ -1,7 +1,7 @@
 import type { CheerioAPI } from 'cheerio';
 import type { Element } from 'domhandler';
 import type { PipelineStep, PipelineContext, ComponentNode } from '../../types/pipeline.js';
-import { isSemanticTag, tagToComponentName, getMeaningfulClasses } from './semantic.js';
+import { isSemanticTag, tagToComponentName, getMeaningfulClasses, hasDistinctPattern } from './semantic.js';
 import { findRepeatedPatterns, type DetectedPattern } from './signature.js';
 import { showComponentTree } from '../../cli/output.js';
 import { flattenTree } from '../../util/tree.js';
@@ -38,7 +38,7 @@ function buildComponentTree(
 
   const children: ComponentNode[] = [];
 
-  if (isSemanticTag(el) || depth === 0) {
+  if (isSemanticTag(el) || depth === 0 || hasDistinctPattern($, el)) {
     // This is a split point — recurse into children
     for (const child of childElements) {
       const childNode = buildComponentTree($, child, depth + 1, repeatedPatterns);
