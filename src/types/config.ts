@@ -3,5 +3,5 @@ export interface H2uiConfig {
   typescript?: boolean;
   strict?: boolean;
   split?: boolean;
-  cssMode?: 'module';
+  cssMode?: 'module' | 'scoped' | 'inline' | 'global';
 }
