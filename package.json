@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Convert HTML pages to React components",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "./dist/src/cli/index.js",
   "bin": {
-    "h2ui": "./bin/h2ui.js"
+    "h2ui": "./dist/bin/h2ui.js"
   },
   "scripts": {
     "build": "tsc",

@@ -6,6 +6,7 @@ import { parseInlineStyle } from '../../engine/transform/style.js';
 import { isVoidElement, formatJsxTag } from '../../engine/transform/elements.js';
 import { toPascalCase } from '../../util/file.js';
 import { flattenTree } from '../../util/tree.js';
+import { isInheritable } from '../../engine/css/extract.js';
 
 /**
  * Generate JSX code string from a Cheerio AST root node.
@@ -308,7 +309,12 @@ function extractCssProperties($: CheerioAPI, el: Element): Record<string, string
   if (styleAttr) {
     const parsed = parseInlineStyle(styleAttr);
     if (parsed) {
-      Object.assign(result, parsed);
+      // Filter out inheritable CSS properties
+      for (const [prop, value] of Object.entries(parsed)) {
+        if (!isInheritable(prop)) {
+          result[prop] = value;
+        }
+      }
     }
   }
 

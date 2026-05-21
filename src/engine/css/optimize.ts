@@ -83,9 +83,9 @@ export function condenseProperties(props: Record<string, string>): Record<string
       const leftExplicit = hasLeft;
 
       const valTop = result[top] || '';
-      const valRight = result[right] || result[bottom] || '';
+      const valRight = result[right] || result[left] || '';
       const valBottom = result[bottom] || '';
-      const valLeft = result[left] || result[right] || result[bottom] || '';
+      const valLeft = result[left] || result[right] || '';
 
       // Remove longhands
       for (const p of rule.properties) {
