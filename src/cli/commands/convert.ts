@@ -34,6 +34,8 @@ export async function convertCommand(
     typescript: options.typescript !== undefined ? options.typescript : (configFile.typescript ?? DEFAULT_OPTIONS.typescript),
     strict: options.strict !== undefined ? options.strict : (configFile.strict ?? DEFAULT_OPTIONS.strict),
     split: options.split !== undefined ? options.split : (configFile.split ?? DEFAULT_OPTIONS.split),
+    // Note: If --css-mode CLI flag is added in future, update to:
+    // cssMode: options.cssMode ?? configFile.cssMode ?? DEFAULT_OPTIONS.cssMode
     cssMode: configFile.cssMode ?? DEFAULT_OPTIONS.cssMode,
   };
 
