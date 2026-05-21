@@ -86,43 +86,43 @@
 
 | Requirement | Phase | Status |
 | ----------- | ----- | ------ |
-| CLI-01 | TBD | Pending |
-| CLI-02 | TBD | Pending |
-| CLI-03 | TBD | Pending |
-| CLI-04 | TBD | Pending |
-| CLI-05 | TBD | Pending |
-| CLI-06 | TBD | Pending |
-| JSX-01 | TBD | Pending |
-| JSX-02 | TBD | Pending |
-| JSX-03 | TBD | Pending |
-| JSX-04 | TBD | Pending |
-| JSX-05 | TBD | Pending |
-| JSX-06 | TBD | Pending |
-| JSX-07 | TBD | Pending |
-| JSX-08 | TBD | Pending |
-| JSX-09 | TBD | Pending |
-| JSX-10 | TBD | Pending |
-| JSX-11 | TBD | Pending |
-| SPL-01 | TBD | Pending |
-| SPL-02 | TBD | Pending |
-| SPL-03 | TBD | Pending |
-| SPL-04 | TBD | Pending |
-| SPL-05 | TBD | Pending |
-| SPL-06 | TBD | Pending |
-| CSS-01 | TBD | Pending |
-| CSS-02 | TBD | Pending |
-| CSS-03 | TBD | Pending |
-| CSS-04 | TBD | Pending |
-| CSS-05 | TBD | Pending |
-| CSS-06 | TBD | Pending |
-| CSS-07 | TBD | Pending |
-| CFG-01 | TBD | Pending |
-| CFG-02 | TBD | Pending |
+| CLI-01 | Phase 1 | Pending |
+| CLI-02 | Phase 1 | Pending |
+| CLI-03 | Phase 1 | Pending |
+| CLI-04 | Phase 1 | Pending |
+| CLI-05 | Phase 1 | Pending |
+| CLI-06 | Phase 1 | Pending |
+| JSX-01 | Phase 1 | Pending |
+| JSX-02 | Phase 1 | Pending |
+| JSX-03 | Phase 1 | Pending |
+| JSX-04 | Phase 1 | Pending |
+| JSX-05 | Phase 1 | Pending |
+| JSX-06 | Phase 1 | Pending |
+| JSX-07 | Phase 1 | Pending |
+| JSX-08 | Phase 1 | Pending |
+| JSX-09 | Phase 1 | Pending |
+| JSX-10 | Phase 1 | Pending |
+| JSX-11 | Phase 1 | Pending |
+| SPL-01 | Phase 2 | Pending |
+| SPL-02 | Phase 2 | Pending |
+| SPL-03 | Phase 2 | Pending |
+| SPL-04 | Phase 2 | Pending |
+| SPL-05 | Phase 2 | Pending |
+| SPL-06 | Phase 4 | Pending |
+| CSS-01 | Phase 2 | Pending |
+| CSS-02 | Phase 2 | Pending |
+| CSS-03 | Phase 2 | Pending |
+| CSS-04 | Phase 2 | Pending |
+| CSS-05 | Phase 2 | Pending |
+| CSS-06 | Phase 2 | Pending |
+| CSS-07 | Phase 2 | Pending |
+| CFG-01 | Phase 3 | Pending |
+| CFG-02 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 32 total
-- Mapped to phases: 0 — awaiting roadmap
-- Unmapped: 32 ⚠️
+- Mapped to phases: 32
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-21*
