@@ -1,6 +1,6 @@
 ---
 phase: 01-core-cli-jsx
-reviewed: 2026-05-21T12:00:00Z
+reviewed: 2026-05-21T08:30:00Z
 depth: standard
 files_reviewed: 34
 files_reviewed_list:
@@ -11,10 +11,10 @@ files_reviewed_list:
   - src/cli/index.ts
   - src/cli/output.ts
   - src/config/defaults.ts
-  - src/engine/css/index.ts
   - src/engine/css/extract.ts
-  - src/engine/css/optimize.ts
+  - src/engine/css/index.ts
   - src/engine/css/module.ts
+  - src/engine/css/optimize.ts
   - src/engine/css/style-tag.ts
   - src/engine/splitter/index.ts
   - src/engine/splitter/semantic.ts
@@ -38,10 +38,10 @@ files_reviewed_list:
   - tsconfig.json
   - vitest.config.ts
 findings:
-  critical: 3
-  warning: 3
+  critical: 1
+  warning: 4
   info: 2
-  total: 8
+  total: 7
 status: issues_found
 ---
 
@@ -54,151 +54,146 @@ status: issues_found
 
 ## Summary
 
-Reviewed 34 source files including CLI commands, pipeline steps, engine modules (CSS, splitter, transform), type definitions, and test files. Found 3 critical blockers that cause incorrect or incomplete output, plus 3 warnings and 2 info items.
+Reviewed 34 source files covering CLI commands, pipeline infrastructure, component splitting engine, CSS extraction/conversion, transform modules, type definitions, and tests. Found 1 critical correctness bug in shared CSS deduplication that silently drops styles, 4 warnings about code quality and potential issues, and 2 info items about dead code and incomplete tests.
 
-The most severe issue is that per-component JSX generation is completely broken - it outputs only placeholder content `<div>ComponentName content</div>` instead of actual rendered HTML.
+Core pipeline logic is sound. Per-component JSX generation correctly uses CheerioAPI (the existing review's CR-01 about null being passed was incorrect based on current code at lines 202-207). CSS module class name bindings are consistent between generation and usage.
 
 ---
 
 ## Critical Issues
 
-### CR-01: Per-component JSX generation outputs only placeholders
+### CR-01: Shared CSS deduplication silently overwrites conflicting property values
 
-**File:** `src/pipeline/steps/convert.ts:203-213`
-**Issue:** The `generateComponentCode` function passes `null as any` as the CheerioAPI parameter to `generateJsxFromNode` and then discards the result, replacing it with a hardcoded placeholder `<div>${node.name} content</div>`. This means all per-component splitting produces meaningless output.
-
-```typescript
-const jsxContent = generateJsxFromNode(
-  null as any,  // BUG: CheerioAPI is null
-  node.element,
-  warnings
-);
-
-// For now, just generate placeholders - the actual content rendering
-// happens via the element tree during conversion
-const innerContent = `<div>${node.name} content</div>`;
-```
-
-**Fix:**
-```typescript
-// Use the correct $ from ctx.$
-// Note: Need to pass the CheerioAPI from PipelineContext
-const jsxContent = generateJsxFromNode(
-  $,
-  node.element,
-  warnings
-);
-const innerContent = jsxContent;
-```
-
----
-
-### CR-02: Root component ignores actual element content
-
-**File:** `src/pipeline/steps/convert.ts:237-288`
-**Issue:** `generateRootComponent` only renders child component tags but discards any actual content from the root element itself. If the root `<body>` has direct text content or non-semantic children, that content is lost.
+**File:** `src/engine/css/module.ts:63-71`
 
 ```typescript
-for (const child of root.children) {
-  lines.push(`      <${child.name} />`);
+for (const [key, comps] of declFrequency) {
+  if (comps.length >= 2) {
+    const colonIdx = key.indexOf(':');
+    const prop = key.slice(0, colonIdx);
+    const value = key.slice(colonIdx + 1);
+    sharedDeclarations[prop] = value;  // <-- OVERWRITES if same prop with different value
+    sharedKeys.add(key);
+  }
 }
-lines.push('    </div>');
 ```
 
-**Fix:** Need to also render the root's non-component content using `generateJsxFromNode` for any remaining children that aren't split into sub-components.
+**Issue:** When two different CSS property values both appear in 2+ components (e.g., `color:red` in components A and B, AND `color:blue` in components C and D), BOTH pass the frequency check (`comps.length >= 2`), but `sharedDeclarations[prop] = value` silently overwrites. Only one value survives.
 
----
+**Scenario:**
+- Components A, B both have `color: red` (frequency 2)
+- Components C, D both have `color: blue` (frequency 2)
+- Both added to `sharedDeclarations` — `color` key gets `blue` (last writer wins)
+- `color:red` is silently dropped from shared CSS but still in individual component CSS
 
-### CR-03: Incorrect CSS shorthand fallback chain
-
-**File:** `src/engine/css/optimize.ts:70-72`
-**Issue:** The fallback chain for building CSS shorthand values is incorrect. `valLeft` falls back to `result[right]` but should fall back to `result[bottom]` per CSS shorthand expansion rules.
-
+**Fix:** Track all shared values per property:
 ```typescript
-const valRight = result[right] || result[top] || '';
-const valBottom = result[bottom] || result[top] || '';
-const valLeft = result[left] || result[right] || result[top] || '';  // WRONG: should be bottom before right
-```
-
-**Fix:**
-```typescript
-const valRight = result[right] || result[top] || '';
-const valBottom = result[bottom] || result[top] || '';
-const valLeft = result[left] || result[bottom] || result[right] || result[top] || '';
+// Instead of sharedDeclarations: Record<string, string>
+// Use: Array<{ prop: string; value: string; keys: string[] }>
+// Or use a Map: Map<string, { value: string; keys: string[] }>
 ```
 
 ---
 
 ## Warnings
 
-### WR-01: Shorthand property creation with incompatible values
+### WR-01: cleanProperties filters out intentional CSS values
 
-**File:** `src/engine/css/optimize.ts:68-82`
-**Issue:** The code creates a shorthand property whenever ANY of its longhands are present, even if the values are incompatible (e.g., top=10px, bottom=20px, right unset). CSS shorthand expansion would not match this intent.
+**File:** `src/engine/css/optimize.ts:96`
 
 ```typescript
-if (hasTop || hasRight || hasBottom || hasLeft) {
-  // Creates shorthand even with incompatible/missing values
-  const shorthand = buildShorthand(valTop, valRight, valBottom, valLeft);
-  result[rule.shorthand] = shorthand;
+if (trimmed && trimmed !== 'initial' && trimmed !== 'inherit') {
+  result[key] = trimmed;
 }
 ```
 
-**Fix:** Only create shorthand if all four sides are present, or if creating it would not change the effective CSS.
+**Issue:** Common CSS values like `'auto'` (for margins, `height: auto`), `'0'` (zero values), and `'normal'` (for `line-height: normal`, `font-weight: normal`) are filtered out if they appear in inline styles. These are often intentional values, not "unset" values.
+
+**Fix:** Only filter truly empty strings:
+```typescript
+if (trimmed && trimmed !== '') {
+  result[key] = trimmed;
+}
+```
 
 ---
 
-### WR-02: Missing React import in generated component files
+### WR-02: Duplicate React imports in every generated component
 
-**File:** `src/pipeline/steps/convert.ts:191-195`
-**Issue:** Generated components use `React.ReactNode` in the Props interface but do not import React.
+**File:** `src/pipeline/steps/convert.ts:192-199`
 
 ```typescript
 if (isTypescript) {
+  lines.push('import React from \'react\';');
+  lines.push('');
   lines.push('interface Props {');
   lines.push('  children?: React.ReactNode;');
+  lines.push('}');
 ```
 
-**Fix:** Add `import React from 'react';` when TypeScript mode is enabled and children prop is used.
+**Also affected:** `src/pipeline/steps/convert.ts:252-258` (generateRootComponent)
+
+**Issue:** Every child component redundantly imports React. With React 17+ new JSX transform, this import is unnecessary. Bundlers deduplicate it, but it indicates the code doesn't account for modern React.
+
+**Fix:** Remove React imports and rely on JSX transform, or add a comment explaining why it's needed for `React.ReactNode` type.
 
 ---
 
-### WR-03: Potential runtime error - optional chaining needed
+### WR-03: Dead code — unused helper functions in module.ts
 
-**File:** `src/engine/css/style-tag.ts:27`
-**Issue:** `warnings.push()` is called inside `$('style').each()` but `warnings` is passed by value (string array). If the callback throws, warnings may not be properly accumulated.
+**File:** `src/engine/css/module.ts:103-114`
 
 ```typescript
-$('style').each((i, el) => {
-  // ...
-  warnings.push(`Extracted <style> tag ${i + 1} to ${name}.module.css`);
-});
+export function getCSSModuleImport(componentName: string, hasStyles: boolean): string {
+  if (!hasStyles) return '';
+  return `import styles from './${componentName}.module.css';\n`;
+}
+
+export function getClassNameBinding(componentName: string, hasStyles: boolean): string {
+  if (!hasStyles) return '';
+  const className = componentToClassName(componentName);
+  return `className={styles.${className}}`;
+}
 ```
 
-**Fix:** This is actually safe due to array reference semantics, but the callback should handle errors gracefully to avoid partial results.
+**Issue:** These exported functions are never imported or called anywhere. Their logic is duplicated inline in `convert.ts`.
+
+**Fix:** Either use these functions in `convert.ts` or remove them.
+
+---
+
+### WR-04: Test files contain only placeholder assertions
+
+**Files:** `test/cli/cli.test.ts`, `test/engine/transform.test.ts`, `test/pipeline/pipeline.test.ts`, `test/pipeline/split-css.test.ts`
+
+**Issue:** All test assertions are `expect(true).toBe(true)` — they validate nothing. Only `test/engine/splitter.test.ts` has real test logic.
+
+**Fix:** Implement actual test assertions for each test case before shipping.
 
 ---
 
 ## Info
 
-### IN-01: Duplicate `flattenTree` implementation
+### IN-01: Duplicate flattenTree implementation
 
 **File:** `src/engine/splitter/index.ts:77-83` and `src/pipeline/steps/convert.ts:158-160`
-**Issue:** The same `flattenTree` function is implemented twice in different files.
 
-**Fix:** Extract to a shared utility in `src/util/` and import where needed.
-
----
-
-### IN-02: Test files contain only placeholder assertions
-
-**Files:** `test/cli/cli.test.ts`, `test/engine/transform.test.ts`, `test/pipeline/pipeline.test.ts`, `test/pipeline/split-css.test.ts`
-**Issue:** All test assertions are `expect(true).toBe(true)` - they test nothing.
-
-**Fix:** Implement actual test logic before shipping.
+Both files contain identical `flattenTree` function. Extract to `src/util/` for DRY principle.
 
 ---
 
-_Reviewed: 2026-05-21_
+### IN-02: Comments indicate incomplete features
+
+**File:** `test/pipeline/split-css.test.ts:5-6`
+```typescript
+it('detects semantic component boundaries', () => {
+  // TODO: Add test after Plan 02
+```
+
+**Issue:** TODO comments indicate incomplete test coverage tied to future plans.
+
+---
+
+_Reviewed: 2026-05-21T08:30:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
