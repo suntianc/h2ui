@@ -53,14 +53,11 @@ export function suggestSimilarFiles(inputFile: string, directory: string): strin
     return [];
   }
 
-  // Normalize extension: treat .htm and .html as equivalent
-  const normalizedExt = ext === '.htm' ? '.html' : ext === '.html' ? '.htm' : ext;
-
   // Filter to same extension (with .htm/.html equivalence) and compute scores
   const scored = entries
     .filter((entry) => {
       const entryExt = path.extname(entry);
-      return entryExt === ext || entryExt === normalizedExt;
+      return entryExt === ext;
     })
     .map((entry) => ({
       name: entry,
