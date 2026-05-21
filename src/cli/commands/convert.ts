@@ -2,14 +2,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ora from 'ora';
 import type { ConvertOptions } from '../../types/pipeline.js';
-import type { H2uiConfig } from '../../types/config.js';
-import { DEFAULT_OPTIONS } from '../../config/defaults.js';
+import type { H2uiConfig, LLMConfig } from '../../types/config.js';
+import { DEFAULT_OPTIONS, DEFAULT_LLM_CONFIG } from '../../config/defaults.js';
 import { showError, showSuccess, showWarningSummary, showComponentTree } from '../output.js';
 import { suggestSimilarFiles } from '../../util/suggest.js';
 
 export async function convertCommand(
   file: string,
-  options: { out?: string; typescript?: boolean; strict?: boolean; split?: boolean },
+  options: {
+    out?: string;
+    typescript?: boolean;
+    strict?: boolean;
+    split?: boolean;
+    llm?: boolean;
+    'llm-provider'?: string;
+    'llm-model'?: string;
+    'llm-mode'?: string;
+  },
   configFile: Partial<H2uiConfig> = {},
 ): Promise<void> {
   if (!file) {
@@ -38,6 +47,19 @@ export async function convertCommand(
     // cssMode: options.cssMode ?? configFile.cssMode ?? DEFAULT_OPTIONS.cssMode
     cssMode: configFile.cssMode ?? DEFAULT_OPTIONS.cssMode,
   };
+
+  // Merge LLM config: CLI --llm-* flags > config file > defaults
+  // --llm flag alone sets mode='always'
+  let llmConfig: LLMConfig | undefined;
+  if (options.llm || configFile.llm) {
+    llmConfig = {
+      provider: (options['llm-provider'] ?? configFile.llm?.provider ?? DEFAULT_LLM_CONFIG.provider) as LLMConfig['provider'],
+      model: options['llm-model'] ?? configFile.llm?.model ?? DEFAULT_LLM_CONFIG.model,
+      mode: options['llm'] ? 'always' : ((options['llm-mode'] ?? configFile.llm?.mode ?? DEFAULT_LLM_CONFIG.mode) as LLMConfig['mode']),
+      baseURL: configFile.llm?.baseURL,
+      apiKey: configFile.llm?.apiKey,
+    };
+  }
 
   // Resolve paths
   const inputPath = path.resolve(file);
@@ -68,6 +90,12 @@ export async function convertCommand(
 
   pipeline.addStep(generateStep);
 
+  // Add LLM review step if llm is configured
+  if (llmConfig && llmConfig.mode !== 'off') {
+    const { llmReviewStep } = await import('../../pipeline/steps/llm-review.js');
+    pipeline.addStep(llmReviewStep);
+  }
+
   // Run pipeline
   const ctx = await pipeline.run({
     html: '',
@@ -77,7 +105,7 @@ export async function convertCommand(
     outputPath: undefined,
     warnings: [],
     errors: [],
-    options: { ...mergedConfig, out: outputDir },
+    options: { ...mergedConfig, out: outputDir, llm: llmConfig },
   });
 
   // Handle strict mode
@@ -117,6 +145,36 @@ export async function convertCommand(
       const fileCount = ctx.components.length;
       console.log(`\n\x1b[32m✓\x1b[0m Wrote ${fileCount} files to ${mergedConfig.out}`);
       showComponentTree(ctx.componentTree);
+
+      // Display LLM review results if available
+      if (ctx.llmResult) {
+        console.log('\n--- LLM Review ---');
+
+        if (ctx.llmResult._fallback) {
+          console.log('[llm] Warning: LLM review was unavailable, using rules-only output');
+        } else {
+          if (ctx.llmResult.naming_suggestions && ctx.llmResult.naming_suggestions.length > 0) {
+            console.log('\nNaming suggestions:');
+            for (const s of ctx.llmResult.naming_suggestions) {
+              console.log(`  ${s.original} -> ${s.suggested}: ${s.rationale}`);
+            }
+          }
+
+          if (ctx.llmResult.cleanup_hints && ctx.llmResult.cleanup_hints.length > 0) {
+            console.log('\nCleanup hints:');
+            for (const h of ctx.llmResult.cleanup_hints) {
+              console.log(`  - ${h}`);
+            }
+          }
+
+          if (ctx.llmResult.boundary_changes && ctx.llmResult.boundary_changes.length > 0) {
+            console.log('\nBoundary changes:');
+            for (const b of ctx.llmResult.boundary_changes) {
+              console.log(`  ${b.action.toUpperCase()} ${b.component_id}: ${b.reason}`);
+            }
+          }
+        }
+      }
     } else {
       showSuccess(ctx.outputPath);
     }
