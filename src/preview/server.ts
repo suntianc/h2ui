@@ -89,8 +89,8 @@ function watchDirectory(
         }
       });
       watchers.push(watcher);
-    } catch {
-      // Permission denied or other error - skip
+    } catch (err: any) {
+      console.warn(`[preview] Cannot watch directory ${dir}: ${err.message}`);
     }
   }
 
@@ -120,8 +120,8 @@ function watchDirectory(
         if (stats.isDirectory()) {
           addDir(fullPath);
         }
-      } catch {
-        // Ignore
+      } catch (err: any) {
+        console.warn(`[preview] Cannot stat directory ${fullPath}: ${err.message}`);
       }
     });
     watchers.push(newDirWatcher);
