@@ -1,3 +1,4 @@
+import type { CheerioAPI } from 'cheerio';
 import type { LLMConfig } from './config.js';
 
 export interface ConvertOptions {
@@ -13,7 +14,7 @@ export interface ConvertOptions {
 export interface PipelineContext {
   html: string;
   filePath: string;
-  $?: any;
+  $?: CheerioAPI;
   code?: string;
   outputPath?: string;
   warnings: string[];
