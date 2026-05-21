@@ -38,7 +38,11 @@ export function App() {
         // Refresh component tree from localStorage
         const refreshed = localStorage.getItem('h2ui-component-tree');
         if (refreshed) {
-          setComponentTree(JSON.parse(refreshed));
+          try {
+            setComponentTree(JSON.parse(refreshed));
+          } catch (e) {
+            console.error('Failed to parse component tree from localStorage:', e);
+          }
         }
       },
     });
