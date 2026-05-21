@@ -18,7 +18,12 @@ export async function initCommand(options: { force?: boolean } = {}): Promise<vo
     cssMode: 'module',
   }, null, 2);
 
-  fs.writeFileSync(configPath, config, 'utf-8');
-  console.log(`\x1b[32m✓\x1b[0m Created .h2uirc`);
-  console.log('  Edit this file to configure h2ui defaults.');
+  try {
+    fs.writeFileSync(configPath, config, 'utf-8');
+    console.log(`\x1b[32m✓\x1b[0m Created .h2uirc`);
+    console.log('  Edit this file to configure h2ui defaults.');
+  } catch (err) {
+    console.error(`\x1b[31m✗\x1b[0m Failed to create .h2uirc: ${err}`);
+    process.exit(1);
+  }
 }
