@@ -1,17 +1,21 @@
 # Project State: h2ui
 
-**Status:** Initialized — ready for Phase 1
+**Status:** Phase 1 context gathered — ready for planning
 
 ## Phase Progress
 
 | Phase | Status | Plans | Progress |
 | ----- | ------ | ----- | -------- |
-| 1     | ○      | 0/2   | 0%       |
+| 1     | ◆      | 0/2   | 0%       |
 | 2     | ○      | 0/2   | 0%       |
 | 3     | ○      | 0/1   | 0%       |
 | 4     | ○      | 0/2   | 0%       |
 
-**Current phase:** Phase 1 — Core CLI + HTML→JSX/TSX Pipeline
+**Current phase:** Phase 1 — Core CLI + HTML→JSX/TSX Pipeline (context gathered)
+
+## Last Session
+- **Stopped at:** Phase 1 context gathered
+- **Resume:** `.planning/phases/01-core-cli-jsx/01-CONTEXT.md`
 
 ## Requirements Status
 
