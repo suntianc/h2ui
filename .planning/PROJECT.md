@@ -12,16 +12,15 @@ Take any HTML page and produce production-ready React components with properly e
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] HTML file input via CLI argument *(Phase 1)*
+- [x] Parse full HTML page AST *(Phase 1)*
+- [x] Output React TSX/JSX components (configurable format) *(Phase 1)*
 
 ### Active
 
-- [ ] HTML file input via CLI argument
-- [ ] Parse full HTML page AST
 - [ ] Identify semantic component boundaries (header, nav, section, footer, etc.)
 - [ ] Split HTML into component tree with separate output files
 - [ ] Extract CSS and generate reusable CSS Modules
-- [ ] Output React TSX/JSX components (configurable format)
 - [ ] Component naming and optimization via configurable LLM provider
 - [ ] npm package with npx and global install support
 - [ ] Config file support (LLM provider/API key, output preferences)
@@ -34,6 +33,8 @@ Take any HTML page and produce production-ready React components with properly e
 - Framework-agnostic output — React-only for v1 (Vue/Svelte etc. deferred)
 
 ## Context
+
+Phase 1 complete (2026-05-21) — CLI + attribute conversion pipeline built and verified. Ready for Phase 2: component splitting + CSS extraction.
 
 Started as a personal project to explore combining AST parsing with LLM augmentation for code generation. The hybrid approach (rules for structure + LLM for naming/semantics) aims for deterministic component splitting with intelligent naming.
 

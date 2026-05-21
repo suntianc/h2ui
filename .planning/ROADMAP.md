@@ -5,7 +5,7 @@
 **v1 Requirements:** 32
 **Coverage:** 32/32 mapped ✓
 
-## Phase 1: Core CLI + HTML→JSX/TSX Pipeline
+## Phase 1: Core CLI + HTML→JSX/TSX Pipeline ✅ *(completed 2026-05-21)*
 
 **Goal:** Working CLI that converts basic HTML to valid React TSX/JSX and writes files
 
