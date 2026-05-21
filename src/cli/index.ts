@@ -29,9 +29,10 @@ program
 program
   .command('init')
   .description('Generate a .h2uirc config scaffold')
-  .action(async () => {
+  .option('--force', 'overwrite existing .h2uirc')
+  .action(async (options: { force?: boolean }) => {
     showBanner();
-    await initCommand();
+    await initCommand(options);
   });
 
 if (!process.argv.slice(2).length) {
