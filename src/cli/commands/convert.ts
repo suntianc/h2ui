@@ -4,6 +4,7 @@ import type { ConvertOptions } from '../../types/pipeline.js';
 import type { H2uiConfig } from '../../types/config.js';
 import { DEFAULT_OPTIONS } from '../../config/defaults.js';
 import { showError, showSuccess, showWarningSummary } from '../output.js';
+import { suggestSimilarFiles } from '../../util/suggest.js';
 
 export async function convertCommand(
   file: string,
@@ -16,7 +17,13 @@ export async function convertCommand(
   }
 
   if (!fs.existsSync(file)) {
-    showError(`File not found: ${file}`);
+    const dir = path.dirname(path.resolve(file));
+    const suggestions = suggestSimilarFiles(file, dir);
+    if (suggestions.length > 0) {
+      showError(`File not found: ${file}\n  Did you mean: ${suggestions[0]}?`);
+    } else {
+      showError(`File not found: ${file}\n  Run 'h2ui --help' for usage information.`);
+    }
     process.exit(1);
   }
 
