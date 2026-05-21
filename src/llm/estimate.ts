@@ -11,7 +11,7 @@ const COST_PER_1M_INPUT: Record<string, number> = {
  * Estimate cost for a given token count and model.
  */
 export function estimateCost(tokens: number, model: string): number {
-  const rate = COST_PER_1M_INPUT[model] ?? 0.15;
+  const rate = COST_PER_1M_INPUT[Object.keys(COST_PER_1M_INPUT).find(k => model.startsWith(k)) ?? ''] ?? 0.15;
   return (tokens / 1_000_000) * rate;
 }
 
@@ -24,5 +24,5 @@ export function displayCostWarning(inputText: string, model: string): void {
   const inputCost = estimateCost(tokens, model);
   const outputEstimate = estimateCost(512, model) * 0.5;  // rough 50% compression estimate
   const total = inputCost + outputEstimate;
-  console.warn(`[llm] ~${tokens} tokens (~$估算: ${total.toFixed(4)}) -- calling ${model}`);
+  console.warn(`[llm] ~${tokens} tokens (~$est: ${total.toFixed(4)}) -- calling ${model}`);
 }
