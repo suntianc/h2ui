@@ -73,8 +73,8 @@ export function initWebSocketClient(options: WSClientOptions = {}): WSClient {
     retries++;
     onReconnecting?.();
 
-    // Exponential backoff
-    const delay = retryInterval * Math.pow(2, retries - 1);
+    // Exponential backoff with jitter
+    const delay = retryInterval * Math.pow(2, retries - 1) + Math.random() * 1000;
     console.log(`[preview-client] Reconnecting in ${delay}ms (attempt ${retries}/${maxRetries})`);
 
     reconnectTimeout = setTimeout(connect, delay);
