@@ -9,6 +9,10 @@ export const previewCommand = new Command('preview')
   .action(async (options) => {
     const outputDir = path.resolve(options.out);
     const port = parseInt(options.port, 10);
+    if (isNaN(port) || port < 1 || port > 65535) {
+      console.error(`[preview] Invalid port: ${options.port}. Must be a number between 1 and 65535.`);
+      process.exit(1);
+    }
 
     console.log(`[preview] Starting preview server...`);
     console.log(`[preview] Watching: ${outputDir}`);
