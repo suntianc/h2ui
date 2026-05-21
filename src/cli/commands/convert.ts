@@ -5,12 +5,13 @@ import { showError, showSuccess, showWarningSummary } from '../output.js';
 
 export async function convertCommand(
   file: string,
-  options: { out: string; typescript: boolean; strict: boolean }
+  options: { out: string; typescript: boolean; strict: boolean; split: boolean }
 ): Promise<void> {
   const opts: ConvertOptions = {
     out: options.out || './h2ui_output/',
     typescript: options.typescript !== false,
     strict: options.strict || false,
+    cssMode: 'module',
   };
 
   if (!file) {
@@ -27,7 +28,7 @@ export async function convertCommand(
   const inputPath = path.resolve(file);
   const outputDir = path.resolve(opts.out);
 
-  // Dynamic imports so CLI works without pipeline modules (Plan 02)
+  // Dynamic imports so CLI works without pipeline modules
   const { Pipeline } = await import('../../pipeline/index.js');
   const { parseStep } = await import('../../pipeline/steps/parse.js');
   const { convertStep } = await import('../../pipeline/steps/convert.js');
@@ -36,7 +37,18 @@ export async function convertCommand(
   // Build pipeline
   const pipeline = new Pipeline();
   pipeline.addStep(parseStep);
-  pipeline.addStep(convertStep);
+
+  // Only add splitting/CSS steps if --no-split is not set
+  if (options.split !== false) {
+    const { splitStep } = await import('../../engine/splitter/index.js');
+    const { cssStep } = await import('../../engine/css/index.js');
+    pipeline.addStep(splitStep);
+    pipeline.addStep(convertStep);
+    pipeline.addStep(cssStep);
+  } else {
+    pipeline.addStep(convertStep);
+  }
+
   pipeline.addStep(generateStep);
 
   // Run pipeline
@@ -64,7 +76,7 @@ export async function convertCommand(
       showError(err);
     }
 
-    // Write partial output even with errors (D-21)
+    // Write partial output even with errors
     if (ctx.outputPath) {
       showSuccess(ctx.outputPath);
     }

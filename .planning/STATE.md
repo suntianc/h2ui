@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 01 of 1 (core cli jsx)
-status: verifying
-stopped_at: Both plans executed
-last_updated: "2026-05-21T08:31:11.934Z"
+current_phase: 01 of 2 (core cli jsx)
+status: planning
+stopped_at: Phase 2 execution started
+last_updated: "2026-05-21T09:15:06.757Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -15,35 +15,24 @@ progress:
 
 # Project State: h2ui
 
-**Status:** Phase 1 plans complete, ready for verification
+**Status:** Ready to plan
 
 ## Phase Progress
 
 | Phase | Status | Plans | Progress |
 | ----- | ------ | ----- | -------- |
-| 1     | ◆      | 2/2   | 100%     |
-| 2     | ○      | 0/2   | 0%       |
+| 1     | ✓      | 2/2   | 100%     |
+| 2     | ◆      | 0/3   | 0%       |
 | 3     | ○      | 0/1   | 0%       |
 | 4     | ○      | 0/2   | 0%       |
 
-**Current phase:** 01 of 1 (core cli jsx)
+**Current phase:** 01 of 2 (core cli jsx)
 
-## Execution Summary
+## Current Execution
 
-### Plan 01: Project Scaffold + CLI Infrastructure ✅
+### Wave 1: Pipeline Infrastructure + Multi-Component Output
 
-- npm project `h2ui` with TypeScript/ESM
-- Commander CLI with `convert` and `init` subcommands
-- Type definitions, output utilities
-- Test infrastructure with vitest + 6 fixtures
-
-### Plan 02: HTML→JSX/TSX Pipeline ✅
-
-- Complete pipeline: parse → convert → generate
-- Full attribute mapping (className, htmlFor, SVG camelCase, event handlers)
-- Inline style parser (vendor prefix support)
-- Void element handling, Prettier formatting
-- Pipeline wired into CLI with lazy imports
+### Wave 2: Split Engine + CSS Engine
 
 ## Requirements Status
 
@@ -60,8 +49,8 @@ progress:
 
 ## Last Session
 
-- **Stopped at:** Both plans executed
-- **Resume:** Verify phase goal → update roadmap → proceed to Phase 2
+- **Stopped at:** Phase 2 execution started
+- **Resume:** Continue with wave 1 execution
 
 ---
 *Last updated: 2026-05-21*

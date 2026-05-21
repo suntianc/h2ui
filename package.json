@@ -26,9 +26,11 @@
   "dependencies": {
     "cheerio": "^1.2.0",
     "commander": "^12.1.0",
+    "css-tree": "^3.2.1",
     "prettier": "^3.8.3"
   },
   "devDependencies": {
+    "@types/css-tree": "^2.3.11",
     "@types/node": "^25.9.1",
     "tsx": "^4.22.3",
     "typescript": "^5.9.3",

@@ -17,8 +17,9 @@ program
   .argument('<file>', 'path to HTML file')
   .option('--out <directory>', 'output directory (default: ./h2ui_output/)')
   .option('--no-typescript', 'output .jsx instead of .tsx')
+  .option('--no-split', 'disable component splitting (single-file output)')
   .option('--strict', 'promote all warnings to errors')
-  .action(async (file: string, options: { out: string; typescript: boolean; strict: boolean }) => {
+  .action(async (file: string, options: { out: string; typescript: boolean; strict: boolean; split: boolean }) => {
     showBanner();
     await convertCommand(file, options);
   });
