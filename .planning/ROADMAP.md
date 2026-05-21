@@ -12,6 +12,7 @@
 **Rationale:** Foundation — without reliable parsing and attribute conversion, nothing else works. This establishes the pipeline architecture and CLI interface that all later phases build on.
 
 **Requirements:**
+
 - CLI-01, CLI-02, CLI-03, CLI-04, CLI-05, CLI-06
 - JSX-01, JSX-02, JSX-03, JSX-04, JSX-05, JSX-06, JSX-07, JSX-08, JSX-09, JSX-10, JSX-11
 - CFG-02
@@ -19,6 +20,7 @@
 **Total requirements: 18**
 
 **Success criteria:**
+
 1. User can run `h2ui input.html --out ./components` and get TSX files written to disk
 2. `class` → `className`, `style="..."` → `style={{...}}`, `for` → `htmlFor` all work
 3. Void elements render as self-closing `<br />`
@@ -40,12 +42,14 @@
 **Rationale:** Core differentiators. This is where h2ui separates from existing tools like html-to-react-components (which requires manual `data-component` markers) and Magic Patterns (inline styles only). Auto-splitting + CSS Modules = production-ready output.
 
 **Requirements:**
+
 - SPL-01, SPL-02, SPL-03, SPL-04, SPL-05, SPL-06
 - CSS-01, CSS-02, CSS-03, CSS-04, CSS-05, CSS-06, CSS-07
 
 **Total requirements: 13**
 
 **Success criteria:**
+
 1. `<header>`, `<nav>`, `<main>`, `<section>`, `<article>`, `<footer>` each become separate component files
 2. Parent components import child components with proper paths
 3. Repeated card-like structures are extracted as reusable components
@@ -67,9 +71,11 @@
 **Rationale:** Tool needs to be configurable for real-world use. Config file allows teams to standardize settings. Polish makes the tool pleasant to use.
 
 **Requirements:**
+
 - CFG-01
 
 **Plus from v2 backlog (moved to Phase 3):**
+
 - Progress spinners during conversion
 - Colorized output
 - Component tree preview
@@ -78,6 +84,7 @@
 **Total requirements: 1 (+ polish work)**
 
 **Success criteria:**
+
 1. User can create `.h2uirc` with custom defaults
 2. CLI flags override config file values
 3. Conversion shows nice terminal output with progress
@@ -94,6 +101,7 @@
 **Rationale:** Enhancement layer. The tool works perfectly without LLM — this just makes output smarter. Configurable provider ensures no vendor lock-in.
 
 **Requirements:** (v2 requirements)
+
 - LLM-01, LLM-02, LLM-03, LLM-04, LLM-05
 - SPL-06 (non-semantic splitting by class/ID)
 
@@ -102,11 +110,20 @@
 **Plans:** 3 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 04-01-PLAN.md — SPL-06 + LLM foundation (config types, provider factories, token utilities, Zod schemas)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 04-02-PLAN.md — LLM review service + pipeline step
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 04-03-PLAN.md — CLI integration (--llm flag, config merge, suggestion display)
 
 **Success criteria:**
+
 1. `--llm` flag invokes optional LLM pass
 2. Component names are context-appropriate (not just "Header", "Section")
 3. Multiple LLM providers work (OpenAI, Anthropic, Ollama)
