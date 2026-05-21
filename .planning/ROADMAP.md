@@ -3,9 +3,9 @@
 **Defined:** 2026-05-21
 **Phases:** 4
 **v1 Requirements:** 32
-**Coverage:** 32/32 mapped ✓
+**Coverage:** 32/32 mapped
 
-## Phase 1: Core CLI + HTML→JSX/TSX Pipeline ✅ *(completed 2026-05-21)*
+## Phase 1: Core CLI + HTML→JSX/TSX Pipeline (completed 2026-05-21)
 
 **Goal:** Working CLI that converts basic HTML to valid React TSX/JSX and writes files
 
@@ -33,7 +33,7 @@
 
 ---
 
-## Phase 2: Component Splitting + CSS Extraction ✅ *(completed 2026-05-21)*
+## Phase 2: Component Splitting + CSS Extraction (completed 2026-05-21)
 
 **Goal:** Split HTML into component tree and extract styles to CSS Modules
 
@@ -60,7 +60,7 @@
 
 ---
 
-## Phase 3: Configuration + Polish ✅ *(completed 2026-05-21)*
+## Phase 3: Configuration + Polish (completed 2026-05-21)
 
 **Goal:** Config file support and DX improvements
 
@@ -69,7 +69,7 @@
 **Requirements:**
 - CFG-01
 
-**Plus DX polish:**
+**Plus from v2 backlog (moved to Phase 3):**
 - Progress spinners during conversion
 - Colorized output
 - Component tree preview
@@ -95,11 +95,16 @@
 
 **Requirements:** (v2 requirements)
 - LLM-01, LLM-02, LLM-03, LLM-04, LLM-05
-
-**Plus from v1 backlog:**
 - SPL-06 (non-semantic splitting by class/ID)
 
 **Total requirements: 6**
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — SPL-06 + LLM foundation (config types, provider factories, token utilities, Zod schemas)
+- [ ] 04-02-PLAN.md — LLM review service + pipeline step
+- [ ] 04-03-PLAN.md — CLI integration (--llm flag, config merge, suggestion display)
 
 **Success criteria:**
 1. `--llm` flag invokes optional LLM pass
@@ -110,7 +115,7 @@
 
 **Avoids pitfall:** Over-relying on LLM (Pitfall 1), LLM cost surprises (Pitfall 6)
 
-**Stack additions:** openai, @anthropic-ai/sdk
+**Stack additions:** openai, @anthropic-ai/sdk, zod (^3.23.8), tiktoken
 
 ---
 
@@ -134,11 +139,12 @@ Phase 4 (LLM) ──depends on── Phase 1+2 output structure
 ## Out of Scope for v1 Roadmap
 
 | Feature | When | Why |
-| ------- | ---- | --- |
+|---------|------|-----|
 | Multi-framework (Vue, Svelte) | v2+ | React-only focus for v1 |
 | Batch conversion | v1.x | Single-file conversion first |
 | Watch mode | v1.x | Manual re-run for v1 |
 | Tailwind inference | v2+ | CSS Modules first |
+| LLM caching (LLM-05) | rejected | D-06 decision: no caching — each conversion triggers fresh LLM call |
 
 ---
 *Roadmap created: 2026-05-21*
