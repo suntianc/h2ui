@@ -1,7 +1,7 @@
 # Roadmap: h2ui
 
 **Defined:** 2026-05-21
-**Phases:** 4
+**Phases:** 5
 **v1 Requirements:** 32
 **Coverage:** 32/32 mapped
 
@@ -136,6 +136,41 @@ Plans:
 
 ---
 
+## Phase 5: LLM Code Modification + Browser Preview
+
+**Goal:** LLM directly modifies component code and provides interactive browser preview
+
+**Rationale:** v1 LLM only suggests improvements. v2 LLM applies them automatically. Browser preview enables visual verification before committing changes.
+
+**Requirements:**
+
+- LLM-06: LLM applies naming and cleanup changes directly to code
+- LLM-07: Interactive component tree preview in browser
+- POL-01: Browser preview server (optional live reload)
+
+**Total requirements: 3**
+
+**Plans:** 2 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — LLM code modification service (ComponentCodeSchema, runLLMModify, guardrail validation, llmModifyStep)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-02-PLAN.md — Browser preview server (Vite preview + WebSocket live reload, React component tree visualization, preview CLI command)
+
+**Success criteria:**
+
+1. LLM modifies component code without manual intervention
+2. `h2ui preview` starts local preview server
+3. Browser shows component tree with interactive editing
+
+**Stack additions:** vite@^6.0.0, ws@^8.18.0
+
+---
+
 ## Phase Dependency Graph
 
 ```
@@ -149,6 +184,9 @@ Phase 3 (Config + Polish) ──depends on── Phase 1 CLI structure
     │
     ▼
 Phase 4 (LLM) ──depends on── Phase 1+2 output structure
+    │
+    ▼
+Phase 5 (LLM Modify + Preview) ──depends on── Phase 4 LLM foundation
 ```
 
 **Note:** Phase 3 can run in parallel with Phase 2 if needed — config file loading is independent of component splitting.
