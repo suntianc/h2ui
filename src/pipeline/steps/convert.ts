@@ -164,6 +164,7 @@ function flattenTree(node: ComponentNode): ComponentNode[] {
  * Each component gets its own file with imports for children + CSS Module.
  */
 function generateComponentCode(
+  $: CheerioAPI,
   node: ComponentNode,
   isTypescript: boolean,
   allComponents: ComponentOutput[],
@@ -198,21 +199,10 @@ function generateComponentCode(
   }
 
   // Build JSX content from the node's element children
-  const $ = (node.element as any).__cheerioContext;
-  // Actually, we need to generate JSX from the element's content
-  // using the CheerioAPI that was available during conversion
-  // This will be populated differently
-  const jsxContent = generateJsxFromNode(
-    // We'll use a simpler approach: render children inline
-    // but wrap with CSS module className if has CSS
-    null as any,
-    node.element,
-    warnings
-  );
+  const jsxContent = generateJsxFromNode($, node.element, warnings);
 
-  // For now, just generate placeholders - the actual content rendering
-  // happens via the element tree during conversion
-  const innerContent = `<div>${node.name} content</div>`;
+  // Use the actual rendered JSX content
+  const innerContent = jsxContent;
 
   const classNameAttr = hasCss
     ? ` className={styles.${node.name[0].toLowerCase() + node.name.slice(1)}}`
@@ -277,6 +267,27 @@ function generateRootComponent(
 
   // Render root's non-component content + child component references
   // For semantic components, children are rendered as component tags
+  const rootEl = root.element;
+  const rootChildren = $(rootEl).contents().toArray();
+  for (const child of rootChildren) {
+    if (child.type === 'text') {
+      const text = (child as Text).data?.trim();
+      if (text) {
+        lines.push(`      ${text}`);
+      }
+    } else if (child.type === 'tag') {
+      const tagName = (child as Element).tagName.toLowerCase();
+      // Only render if NOT a child component
+      const isChildComponent = root.children.some(c => c.name.toLowerCase() === tagName);
+      if (!isChildComponent) {
+        const content = generateJsxFromNode($, child, warnings);
+        if (content) {
+          lines.push(`      ${content}`);
+        }
+      }
+    }
+  }
+
   for (const child of root.children) {
     lines.push(`      <${child.name} />`);
   }
@@ -347,6 +358,7 @@ export const convertStep: PipelineStep = {
           node.cssProperties = cssProperties;
 
           const code = generateComponentCode(
+            $,
             node,
             ctx.options.typescript,
             components,

@@ -42,7 +42,7 @@ findings:
   warning: 6
   info: 4
   total: 13
-status: issues_found
+status: critical_fixed
 ---
 
 # Phase 01: Code Review Report

@@ -39,13 +39,24 @@ const SHORTHAND_RULES: ShorthandRule[] = [
  * 3-value:  top, right=left, bottom
  * 4-value:  top, right, bottom, left
  */
-function buildShorthand(top: string, right: string, bottom: string, left: string): string {
+function buildShorthand(
+  top: string,
+  right: string,
+  bottom: string,
+  left: string,
+  topExplicit: boolean,
+  bottomExplicit: boolean,
+  rightExplicit: boolean,
+  leftExplicit: boolean
+): string {
   if (top === right && right === bottom && bottom === left) {
     return top;
   }
+  // 2-value: top equals bottom AND right equals left
   if (top === bottom && right === left) {
     return `${top} ${right}`;
   }
+  // 3-value: right equals left (but top !== bottom)
   if (right === left) {
     return `${top} ${right} ${bottom}`;
   }
@@ -66,10 +77,15 @@ export function condenseProperties(props: Record<string, string>): Record<string
     const hasLeft = left in result;
 
     if (hasTop || hasRight || hasBottom || hasLeft) {
+      const topExplicit = hasTop;
+      const bottomExplicit = hasBottom;
+      const rightExplicit = hasRight;
+      const leftExplicit = hasLeft;
+
       const valTop = result[top] || '';
-      const valRight = result[right] || result[top] || '';
-      const valBottom = result[bottom] || result[top] || '';
-      const valLeft = result[left] || result[right] || result[top] || '';
+      const valRight = result[right] || result[bottom] || '';
+      const valBottom = result[bottom] || '';
+      const valLeft = result[left] || result[right] || result[bottom] || '';
 
       // Remove longhands
       for (const p of rule.properties) {
@@ -77,7 +93,16 @@ export function condenseProperties(props: Record<string, string>): Record<string
       }
 
       // Only set shorthand if it's more compact
-      const shorthand = buildShorthand(valTop, valRight, valBottom, valLeft);
+      const shorthand = buildShorthand(
+        valTop,
+        valRight,
+        valBottom,
+        valLeft,
+        topExplicit,
+        bottomExplicit,
+        rightExplicit,
+        leftExplicit
+      );
       result[rule.shorthand] = shorthand;
     }
   }
