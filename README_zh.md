@@ -33,15 +33,22 @@ English Documentation: [README.md](./README.md)
 
 ## 安装
 
-在项目根目录下安装依赖：
+通过 npm 进行全局安装：
+
+```bash
+npm install -g h2ui-cli
+```
+
+或者使用 `npx` 直接运行（无需手动安装）：
+
+```bash
+npx h2ui-cli convert <path-to-html-file>
+```
+
+如果是本地开发，请安装依赖并编译：
 
 ```bash
 npm install
-```
-
-编译项目：
-
-```bash
 npm run build
 ```
 
@@ -49,14 +56,15 @@ npm run build
 
 ## 命令行使用指南
 
-编译完成后，可以使用 `node dist/bin/h2ui.js` 运行 CLI 工具：
+> [!NOTE]
+> 如果您是全局安装或通过 `npx` 运行，请直接使用可执行命令 `h2ui`。如果您是本地开发，请将 `h2ui` 替换为 `node dist/bin/h2ui.js`。
 
 ### 1. 初始化配置文件 (`init`)
 
 生成 `.h2uirc` 配置文件 scaffold，用于定义你的个性化默认选项。
 
 ```bash
-node dist/bin/h2ui.js init [--force]
+h2ui init [--force]
 ```
 
 **默认配置文件示例 (`.h2uirc`)**：
@@ -76,7 +84,7 @@ node dist/bin/h2ui.js init [--force]
 将 HTML 页面解析并转换为 React 组件：
 
 ```bash
-node dist/bin/h2ui.js convert <path-to-html-file> [options]
+h2ui convert <path-to-html-file> [options]
 ```
 
 **常用选项：**
@@ -88,7 +96,7 @@ node dist/bin/h2ui.js convert <path-to-html-file> [options]
 
 **命令示例：**
 ```bash
-node dist/bin/h2ui.js convert verify-work/dashboard.html --out verify-work/output --llm on
+h2ui convert verify-work/dashboard.html --out verify-work/output --llm on
 ```
 
 ### 3. 热更新实时预览 (`preview`)
@@ -96,7 +104,7 @@ node dist/bin/h2ui.js convert verify-work/dashboard.html --out verify-work/outpu
 启动本地预览服务器以实时浏览生成的组件效果：
 
 ```bash
-node dist/bin/h2ui.js preview [options]
+h2ui preview [options]
 ```
 
 **常用选项：**
@@ -105,7 +113,7 @@ node dist/bin/h2ui.js preview [options]
 
 **命令示例：**
 ```bash
-node dist/bin/h2ui.js preview --out verify-work/output --port 3000
+h2ui preview --out verify-work/output --port 3000
 ```
 启动后在浏览器中打开 `http://localhost:3000` 即可实时查看组件渲染效果。
 
