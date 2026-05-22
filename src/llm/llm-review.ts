@@ -19,6 +19,8 @@ SCOPE (D-13 to D-17):
 - Confirm or reject component boundaries created by the rules engine
 - Suggest better component names when the rules engine used generic names
 - Identify dead code, redundant nesting, or unclear class names
+  - **Note on Classes**: CSS Modules mappings like \`className={styles.xxx}\` and shared class compositions are expected. Do NOT mark them as dead code or unclear class names.
+- Keep original text language (e.g. Chinese characters) exactly as they are without translation.
 
 OUT OF SCOPE (D-17):
 - Do not restructure the component hierarchy

@@ -26,7 +26,7 @@ export const FidelityResultSchema = z.object({
     rationale: z.string(),
   })),
 
-  // Fidelity fields (NEW)
+  // Fidelity fields (NEW - always required, code handles graceful degradation)
   fidelity_report: z.object({
     structure_match: z.boolean(),
     attribute_preservation: z.array(z.object({
@@ -36,7 +36,7 @@ export const FidelityResultSchema = z.object({
     text_content_match: z.boolean(),
     css_preservation: z.boolean(),
     fidelity_notes: z.array(z.string().max(200)),
-  }).optional(),  // Optional for graceful degradation - LLM may fail with partial result
+  }),
 
   _fallback: z.boolean().nullable().optional(),
 });

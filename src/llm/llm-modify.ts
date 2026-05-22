@@ -21,6 +21,12 @@ SCOPE (D-13 to D-17):
 - Fix potential issues identified in prior review
 - Add proper TypeScript types where beneficial
 - Ensure React best practices are followed
+- **Style and Attribute Guidelines**:
+  - Keep and respect the CSS Modules wiring. Do NOT replace \`className={styles.xxx}\` with hardcoded string classes.
+  - Respect shared CSS extraction and the \`composes\` rule logic built by the compiler.
+  - Keep valid React element properties (e.g. use className, htmlFor, style objects).
+- **Text Preservation**:
+  - Keep original text content exactly in its original language (e.g., Chinese characters). Do NOT translate text content.
 
 OUT OF SCOPE (D-17):
 - Do not restructure the component hierarchy

@@ -15,11 +15,20 @@ import { isInheritable } from '../../engine/css/extract.js';
 function generateJsxFromNode(
   $: CheerioAPI,
   el: AnyNode,
-  warnings: string[]
+  warnings: string[],
+  inPre: boolean = false
 ): string {
   if (el.type === 'text') {
-    const text = (el as Text).data;
-    return text || '';
+    const text = (el as Text).data || '';
+    if (inPre) {
+      // Escape backslashes, backticks, and template expression starters
+      const escaped = text
+        .replace(/\\/g, '\\\\')
+        .replace(/`/g, '\\`')
+        .replace(/\${/g, '\\${');
+      return `{\`${escaped}\`}`;
+    }
+    return text;
   }
 
   if (el.type === 'comment') {
@@ -81,7 +90,7 @@ function generateJsxFromNode(
   // Generate children content
   let childrenContent = '';
   for (const child of children) {
-    childrenContent += generateJsxFromNode($, child, warnings);
+    childrenContent += generateJsxFromNode($, child, warnings, inPre || tagName === 'pre');
   }
 
   return `${opening}${childrenContent}</${tagName}>`;
@@ -144,15 +153,9 @@ function generateComponent(
     lines.push('');
   }
 
-  // Indent the inner content by 2 spaces
-  const indentedContent = innerContent
-    .split('\n')
-    .map(line => `  ${line}`)
-    .join('\n');
-
   lines.push(`function ${componentName}(props${isTypescript ? ': Props' : ''}) {`);
   lines.push('  return (');
-  lines.push(indentedContent);
+  lines.push(innerContent);
   lines.push('  );');
   lines.push('}');
   lines.push('');

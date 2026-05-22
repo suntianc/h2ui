@@ -31,11 +31,17 @@ MODIFY SCOPE:
 - Add proper TypeScript types where beneficial
 - Ensure React best practices are followed
 
-FIDELITY VALIDATION (NEW - Fidelity-01):
+FIDELITY VALIDATION & TRANSLATION RULES (Fidelity-01):
 - Compare generated component structure against original HTML
-- Check that all HTML attributes are preserved in components
-- Verify text content matches original
-- Ensure CSS classes and styles are preserved
+- Check that all HTML elements are preserved (structural 1-to-1 match)
+- **CSS & Attribute Mapping**:
+  - Accept valid React JSX attribute conversions (e.g., class -> className, for -> htmlFor, onclick -> onClick).
+  - Understand that HTML inline style strings are parsed into React style objects.
+  - **Do NOT flag CSS Modules as missing styles**: The rules engine converts standard classes into CSS Module imports (e.g., \`className={styles.xxx}\`). This is correct and must be preserved.
+  - **Support Shared CSS**: Understand that shared rules are extracted into \`shared.module.css\` and composed via CSS Modules \`composes\` rule. Preserve this architecture.
+- **Content Preservation**:
+  - Verify text content matches original.
+  - **IMPORTANT**: Keep original text languages (e.g. Chinese text) exactly as they are. Do not translate any text content.
 - Report any discrepancies in fidelity_notes
 
 OUT OF SCOPE:

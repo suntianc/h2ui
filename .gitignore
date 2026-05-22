@@ -15,6 +15,7 @@ dist/
 .antigravitycli/
 .pi/
 .claude/
+.agent/
 
 # 日志
 *.log
