@@ -204,3 +204,27 @@ Phase 5 (LLM Modify + Preview) ──depends on── Phase 4 LLM foundation
 ---
 *Roadmap created: 2026-05-21*
 **UI hint:** No (CLI tool, no visual UI)
+
+### Phase 05.1: LLM Fidelity + CLI Simplification (INSERTED)
+
+**Goal:** Merge LLM review+modify into single fidelity step; simplify CLI flags
+
+**Rationale:** LLM should validate 100% HTML fidelity before approving component output. CLI flags too scattered — consolidate.
+
+**Requirements:**
+
+- **Fidelity-01:** LLM validates generated components against original HTML (structure, attributes, text content)
+- **Fidelity-02:** Single unified LLM step (merge llmReviewStep + llmModifyStep into llmFidelityStep)
+- **CLI-07:** `--type tsx|jsx` replaces `--typescript`/`--no-typescript`
+- **CLI-08:** LLM enabled by default; `--llm off` to disable
+- **CLI-09:** Remove `--llm-mode`, `--llm-provider`, `--llm-model` from CLI (move to config file)
+
+**Depends on:** Phase 5
+**Plans:** 2 plans
+
+Plans:
+**Wave 1**
+- [ ] 05.1-01-PLAN.md — CLI simplification (--type, --llm on/off, remove deprecated flags)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 05.1-02-PLAN.md — LLM fidelity step merge (llmFidelityStep replacing llmReviewStep + llmModifyStep, fidelity validation)
