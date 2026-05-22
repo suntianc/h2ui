@@ -36,13 +36,13 @@ In the workflow of **Idea (Text) ➔ Design (HTML) ➔ Development (React)**:
 Install globally via npm:
 
 ```bash
-npm install -g h2ui
+npm install -g h2ui-cli
 ```
 
 Or run directly without installation using `npx`:
 
 ```bash
-npx h2ui convert <path-to-html-file>
+npx h2ui-cli convert <path-to-html-file>
 ```
 
 For local development setup, install dependencies and build:
@@ -57,14 +57,14 @@ npm run build
 ## Command Line Interface (CLI) Guide
 
 > [!NOTE]
-> If installed globally or running via `npx`, use the executable command `h2ui`. If you are developing locally, replace `h2ui` with `node dist/bin/h2ui.js`.
+> If installed globally or running via `npx`, use the executable command `h2ui-cli`. If you are developing locally, replace `h2ui-cli` with `node dist/bin/h2ui.js`.
 
 ### 1. Initialize Configuration Scaffold (`init`)
 
 Generates a `.h2uirc` configuration file to define your default preferences.
 
 ```bash
-h2ui init [--force]
+h2ui-cli init [--force]
 ```
 
 **Scaffold config template (`.h2uirc`)**:
@@ -148,7 +148,7 @@ h2ui init [--force]
 Converts a static HTML file to React TSX/JSX components:
 
 ```bash
-h2ui convert <path-to-html-file> [options]
+h2ui-cli convert <path-to-html-file> [options]
 ```
 
 **Available Options:**
@@ -160,7 +160,7 @@ h2ui convert <path-to-html-file> [options]
 
 **Example:**
 ```bash
-h2ui convert verify-work/dashboard.html --out verify-work/output --llm on
+h2ui-cli convert input.html --out ./components --llm on
 ```
 
 ### 3. Live Preview (`preview`)
@@ -168,7 +168,7 @@ h2ui convert verify-work/dashboard.html --out verify-work/output --llm on
 Starts the local Vite-powered preview server with live reload:
 
 ```bash
-h2ui preview [options]
+h2ui-cli preview [options]
 ```
 
 **Available Options:**
@@ -177,7 +177,7 @@ h2ui preview [options]
 
 **Example:**
 ```bash
-h2ui preview --out verify-work/output --port 3000
+h2ui-cli preview --out ./components --port 3000
 ```
 Open `http://localhost:3000` in your browser to view your converted component tree live.
 
