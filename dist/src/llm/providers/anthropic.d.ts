@@ -1,8 +1,0 @@
-import Anthropic from '@anthropic-ai/sdk';
-import type { LLMConfig } from '../../types/config.js';
-/**
- * Create Anthropic client per D-01 (direct SDK).
- * apiKey defaults to ANTHROPIC_API_KEY env var.
- */
-export declare function createAnthropicClient(config: LLMConfig): Anthropic;
-//# sourceMappingURL=anthropic.d.ts.map

@@ -1,4 +1,0 @@
-export declare function initCommand(options?: {
-    force?: boolean;
-}): Promise<void>;
-//# sourceMappingURL=init.d.ts.map
