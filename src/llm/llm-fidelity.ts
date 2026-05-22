@@ -5,7 +5,6 @@ import { displayCostWarning } from './estimate.js';
 import { FidelityResultSchema, type FidelityResult } from './structured/fidelity.js';
 import { createOpenAIClient } from './providers/openai.js';
 import { createAnthropicClient } from './providers/anthropic.js';
-import { zodResponseFormat } from 'openai/helpers/zod';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { stringifySafe, translateLLMError } from './shared.js';
 
@@ -30,6 +29,8 @@ MODIFY SCOPE:
 - Fix potential issues identified in prior review
 - Add proper TypeScript types where beneficial
 - Ensure React best practices are followed
+- **LIMIT**: You can modify and return AT MOST 1 component in the \`components\` array. **CRITICAL**: This component MUST be a small component (fewer than 50 lines of code, e.g. button, select option, item, header). You MUST NOT modify or return the code of large container components (such as AppDiv, MainMain, TaskBoardDiv, or any component with more than 50 lines of code) in the \`components\` array; instead, list any issues or suggestions for them in \`fidelity_notes\` or \`cleanup_hints\`. If no small components need changes, the \`components\` array must be empty. This is CRITICAL to keep the response length minimal and avoid connection timeouts.
+- **SVG Placeholders**: Do not delete, modify, or reformat placeholders like {/* H2UI_SVG_PLACEHOLDER_x */}. Leave them exactly as they are in the component code so they can be restored.
 
 FIDELITY VALIDATION & TRANSLATION RULES (Fidelity-01):
 - Compare generated component structure against original HTML
@@ -50,18 +51,59 @@ OUT OF SCOPE:
 - Do not remove components without explicit reason
 
 OUTPUT FORMAT:
-Return ONLY valid JSON matching the provided schema. No markdown, no explanation outside the JSON.`;
+Return ONLY valid JSON matching the following schema. Return a JSON object with fields:
+{
+  "approved": boolean,
+  "boundary_changes": [{"component_id": string, "action": "confirm" | "reject" | "modify", "reason": string}],
+  "naming_suggestions": [{"original": string, "suggested": string, "rationale": string}],
+  "cleanup_hints": [string],
+  "components": [{"name": string, "code": string, "rationale": string}],
+  "fidelity_report": {
+    "structure_match": boolean,
+    "attribute_preservation": [{"component": string, "missing_attributes": [string]}],
+    "text_content_match": boolean,
+    "css_preservation": boolean,
+    "fidelity_notes": [string]
+  }
+}
+No markdown formatting, no explanation outside the JSON.`;
+}
+
+function cleanHtmlForPrompt(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '<!-- style omitted -->')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '<!-- script omitted -->')
+    .replace(/<link[^>]*>/gi, '')
+    .replace(/<meta[^>]*>/gi, '')
+    .replace(/<svg([^>]*)>[\s\S]*?<\/svg>/gi, '<svg$1><!-- svg paths and content omitted --></svg>')
+    .replace(/src="data:image\/[^"]*"/gi, 'src="data:image/...omitted..."');
+}
+
+interface CleanComponentNode {
+  name: string;
+  tag: string;
+  isRepeated: boolean;
+  children: CleanComponentNode[];
+}
+
+function cleanComponentTreeForLLM(node: ComponentNode): CleanComponentNode {
+  return {
+    name: node.name,
+    tag: node.tag,
+    isRepeated: node.isRepeated,
+    children: (node.children || []).map(cleanComponentTreeForLLM),
+  };
 }
 
 /**
  * Build user content with original HTML, component tree, and current component codes.
  */
-function buildFidelityUserContent(originalHtml: string, componentTree: ComponentNode, components: ComponentOutput[]): string {
-  const treeJson = stringifySafe(componentTree);
-  const componentsJson = stringifySafe(components);
+function buildFidelityUserContent(cleanedHtml: string, cleanedTree: CleanComponentNode, cleanedComponents: Array<{ name: string; code: string }>): string {
+  const treeJson = stringifySafe(cleanedTree);
+  const componentsJson = stringifySafe(cleanedComponents);
   return `Original HTML:
 \`\`\`html
-${originalHtml}
+${cleanedHtml}
 \`\`\`
 
 Component tree:
@@ -88,22 +130,28 @@ async function callOpenAI(
   const client = createOpenAIClient(config);
   const model = config.model ?? 'gpt-4o-mini';
 
-  const completion = await client.chat.completions.parse({
+  const completion = await client.chat.completions.create({
     model,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userContent },
     ],
-    response_format: zodResponseFormat(FidelityResultSchema, 'fidelity_result'),
+    response_format: { type: 'json_object' },
     max_tokens: 8192,
     temperature: 0.2,
   });
 
-  const result = completion.choices[0]?.message?.parsed;
-  if (!result) {
+  const content = completion.choices[0]?.message?.content;
+  if (!content) {
     throw new Error('No response from OpenAI');
   }
-  return result as FidelityResult;
+
+  try {
+    const parsed = JSON.parse(content);
+    return FidelityResultSchema.parse(parsed);
+  } catch (err: any) {
+    throw new Error(`Failed to parse LLM response as valid JSON schema: ${err.message}`);
+  }
 }
 
 /**
@@ -188,31 +236,85 @@ export function validateBeforeWrite(code: string): { valid: boolean; error?: str
  * Main LLM fidelity service.
  * Combines review, modify, and fidelity validation in a single step.
  */
+function replaceSvgsWithPlaceholders(code: string): { cleanedCode: string; svgMap: Record<string, string> } {
+  const svgMap: Record<string, string> = {};
+  let placeholderCount = 0;
+
+  const cleanedCode = code.replace(/<svg[\s\S]*?<\/svg>/g, (match) => {
+    const placeholder = `{/* H2UI_SVG_PLACEHOLDER_${placeholderCount++} */}`;
+    svgMap[placeholder] = match;
+    return placeholder;
+  });
+
+  return { cleanedCode, svgMap };
+}
+
+function restoreSvgs(code: string, svgMap: Record<string, string>): string {
+  let restored = code;
+  for (const [placeholder, originalSvg] of Object.entries(svgMap)) {
+    const match = placeholder.match(/\d+/);
+    if (match) {
+      const id = match[0];
+      const flexRegex = new RegExp(`{\\s*\\/\\*\\s*H2UI_SVG_PLACEHOLDER_${id}\\s*\\*\\/\\s*}`, 'g');
+      restored = restored.replace(flexRegex, originalSvg);
+    }
+  }
+  return restored;
+}
+
 export async function runLLMFidelity(
   html: string,
   componentTree: ComponentNode,
   components: ComponentOutput[],
   config: LLMConfig,
 ): Promise<FidelityResult> {
+  const cleanedHtml = cleanHtmlForPrompt(html);
+  const cleanedTree = cleanComponentTreeForLLM(componentTree);
+  
+  const componentSvgMaps: Record<string, Record<string, string>> = {};
+  const cleanedComponents = components.map(c => {
+    const { cleanedCode, svgMap } = replaceSvgsWithPlaceholders(c.code);
+    componentSvgMaps[c.name] = svgMap;
+    return {
+      name: c.name,
+      code: cleanedCode,
+    };
+  });
+
   // Serialize with circular reference handling
-  const treeJson = stringifySafe(componentTree);
-  const componentsJson = stringifySafe(components);
+  const treeJson = stringifySafe(cleanedTree);
+  const componentsJson = stringifySafe(cleanedComponents);
 
   // Display token estimate before call
-  displayCostWarning(treeJson + componentsJson, config.model ?? 'gpt-4o-mini');
+  displayCostWarning(cleanedHtml + treeJson + componentsJson, config.model ?? 'gpt-4o-mini');
 
   const systemPrompt = buildFidelitySystemPrompt();
-  const userContent = buildFidelityUserContent(html, componentTree, components);
+  const userContent = buildFidelityUserContent(cleanedHtml, cleanedTree, cleanedComponents);
 
   const provider = config.provider ?? 'openai';
 
   try {
+    let result: FidelityResult;
     if (provider === 'anthropic') {
-      return await callAnthropic(config, systemPrompt, userContent);
+      result = await callAnthropic(config, systemPrompt, userContent);
+    } else {
+      // Default: openai (also handles 'ollama' via baseURL)
+      result = await callOpenAI(config, systemPrompt, userContent);
     }
-    // Default: openai (also handles 'ollama' via baseURL)
-    return await callOpenAI(config, systemPrompt, userContent);
+
+    // Restore SVGs in modified components
+    if (result && result.components && Array.isArray(result.components)) {
+      for (const comp of result.components) {
+        const svgMap = componentSvgMaps[comp.name];
+        if (svgMap) {
+          comp.code = restoreSvgs(comp.code, svgMap);
+        }
+      }
+    }
+
+    return result;
   } catch (err: any) {
+    console.error('[llm-fidelity] Full error details:', err);
     // D-11: graceful degradation - explicit error + fallback
     const friendlyMessage = translateLLMError(err);
     throw new Error(`[llm-fidelity] ${friendlyMessage}`);

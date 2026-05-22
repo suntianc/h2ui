@@ -6,6 +6,14 @@ export const previewCommand = new Command('preview')
   .description('Start browser preview server with live reload')
   .option('-o, --out <dir>', 'Output directory to watch', './h2ui_output')
   .option('-p, --port <port>', 'Preview server port', '5173')
+  .addHelpText('after', `
+Examples:
+  # Start server watching the default output directory on default port (5173)
+  $ h2ui preview
+
+  # Watch a custom directory and run on port 8080
+  $ h2ui preview --out ./custom_components --port 8080
+`)
   .action(async (options) => {
     const outputDir = path.resolve(options.out);
     const port = parseInt(options.port, 10);

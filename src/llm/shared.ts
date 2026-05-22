@@ -29,8 +29,8 @@ export function translateLLMError(err: any): string {
   if (msg.includes('model') && (msg.includes('not found') || msg.includes('does not exist'))) {
     return `模型不存在或不可用: ${err.model ?? '未知'}`;
   }
-  // Default: show truncated original message
-  return msg.length > 80 ? msg.substring(0, 80) + '...' : msg;
+  // Default: show original message
+  return msg;
 }
 
 /**

@@ -56,6 +56,8 @@ export const llmFidelityStep: PipelineStep = {
         }
       }
 
+      console.log(`[llm-fidelity] API Success! Modified ${result.components.length} components.`);
+
       // Build llmResult with review + fidelity_report
       const llmResult = {
         approved: result.approved,
@@ -64,7 +66,7 @@ export const llmFidelityStep: PipelineStep = {
         cleanup_hints: result.cleanup_hints,
         components: result.components,
         fidelity_report: result.fidelity_report,
-        _fallback: result._fallback,
+        _fallback: false,
       };
 
       return { ...newCtx, components: updatedComponents, llmResult };

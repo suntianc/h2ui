@@ -3,13 +3,13 @@ import { z } from 'zod';
 export const BoundaryChangeSchema = z.object({
   component_id: z.string(),
   action: z.enum(['confirm', 'reject', 'modify']),
-  reason: z.string().max(200),
+  reason: z.string(),
 });
 
 export const NamingSuggestionSchema = z.object({
   original: z.string(),
   suggested: z.string(),
-  rationale: z.string().max(100),
+  rationale: z.string(),
 });
 
 export const FidelityResultSchema = z.object({
@@ -17,7 +17,7 @@ export const FidelityResultSchema = z.object({
   approved: z.boolean(),
   boundary_changes: z.array(BoundaryChangeSchema),
   naming_suggestions: z.array(NamingSuggestionSchema),
-  cleanup_hints: z.array(z.string().max(150)),
+  cleanup_hints: z.array(z.string()),
 
   // Modify fields
   components: z.array(z.object({
@@ -35,7 +35,7 @@ export const FidelityResultSchema = z.object({
     })),
     text_content_match: z.boolean(),
     css_preservation: z.boolean(),
-    fidelity_notes: z.array(z.string().max(200)),
+    fidelity_notes: z.array(z.string()),
   }),
 
   _fallback: z.boolean().nullable().optional(),
