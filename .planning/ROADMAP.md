@@ -1,197 +1,32 @@
 # Roadmap: h2ui
 
 **Defined:** 2026-05-21
-**Phases:** 5
-**v1 Requirements:** 32
-**Coverage:** 32/32 mapped
+**Last updated:** 2026-05-22 after v1.0 milestone
 
-## Phase 1: Core CLI + HTML→JSX/TSX Pipeline (completed 2026-05-21)
+## Milestones
 
-**Goal:** Working CLI that converts basic HTML to valid React TSX/JSX and writes files
+- ✅ **v1.0 MVP** — Phases 1-05.1 (shipped 2026-05-22)
+- 📋 **v1.1** — Planned (see backlog)
 
-**Rationale:** Foundation — without reliable parsing and attribute conversion, nothing else works. This establishes the pipeline architecture and CLI interface that all later phases build on.
+## Phases
 
-**Requirements:**
+<details>
+<summary>✅ v1.0 MVP (Phases 1-05.1) — SHIPPED 2026-05-22</summary>
 
-- CLI-01, CLI-02, CLI-03, CLI-04, CLI-05, CLI-06
-- JSX-01, JSX-02, JSX-03, JSX-04, JSX-05, JSX-06, JSX-07, JSX-08, JSX-09, JSX-10, JSX-11
-- CFG-02
+- [x] Phase 1: Core CLI + JSX Pipeline (2/2 plans) — completed 2026-05-21
+- [x] Phase 2: Component Splitting + CSS Extraction (3/3 plans) — completed 2026-05-21
+- [x] Phase 3: Configuration + Polish (4/4 plans) — completed 2026-05-21
+- [x] Phase 4: LLM Integration (3/3 plans) — completed 2026-05-22
+- [x] Phase 5: LLM Modify + Browser Preview (2/2 plans) — completed 2026-05-22
+- [x] Phase 05.1: LLM HTML Fidelity Validation (2/2 plans) — completed 2026-05-22
 
-**Total requirements: 18**
+</details>
 
-**Success criteria:**
+### 🚧 v1.1 (Planned)
 
-1. User can run `h2ui input.html --out ./components` and get TSX files written to disk
-2. `class` → `className`, `style="..."` → `style={{...}}`, `for` → `htmlFor` all work
-3. Void elements render as self-closing `<br />`
-4. SVG attributes are properly camelCased
-5. `--no-typescript` generates `.jsx` instead of `.tsx`
-6. Invalid file paths show meaningful error messages
-7. Pipeline architecture is in place — steps are independently testable
+- [ ] Phase 6: [TBD]
 
-**Avoids pitfall:** Broken attribute conversion (Pitfall 4), Self-closing tags (Pitfall 5)
-
-**Stack additions:** Cheerio, commander, TypeScript, Prettier, vitest
-
----
-
-## Phase 2: Component Splitting + CSS Extraction (completed 2026-05-21)
-
-**Goal:** Split HTML into component tree and extract styles to CSS Modules
-
-**Rationale:** Core differentiators. This is where h2ui separates from existing tools like html-to-react-components (which requires manual `data-component` markers) and Magic Patterns (inline styles only). Auto-splitting + CSS Modules = production-ready output.
-
-**Requirements:**
-
-- SPL-01, SPL-02, SPL-03, SPL-04, SPL-05, SPL-06
-- CSS-01, CSS-02, CSS-03, CSS-04, CSS-05, CSS-06, CSS-07
-
-**Total requirements: 13**
-
-**Success criteria:**
-
-1. `<header>`, `<nav>`, `<main>`, `<section>`, `<article>`, `<footer>` each become separate component files
-2. Parent components import child components with proper paths
-3. Repeated card-like structures are extracted as reusable components
-4. Inline `style="..."` is extracted to `.module.css` files
-5. Only explicitly-set CSS properties appear in output (no inherited fluff)
-6. Shared styles are deduplicated; shorthand properties condensed
-7. Component tree is displayed in console after conversion
-
-**Avoids pitfall:** Flat HTML output (Pitfall 3), Naive CSS extraction (Pitfall 2)
-
-**Stack additions:** css-tree
-
----
-
-## Phase 3: Configuration + Polish (completed 2026-05-21)
-
-**Goal:** Config file support and DX improvements
-
-**Rationale:** Tool needs to be configurable for real-world use. Config file allows teams to standardize settings. Polish makes the tool pleasant to use.
-
-**Requirements:**
-
-- CFG-01
-
-**Plus from v2 backlog (moved to Phase 3):**
-
-- Progress spinners during conversion
-- Colorized output
-- Component tree preview
-- Better error messages with suggestions
-
-**Total requirements: 1 (+ polish work)**
-
-**Success criteria:**
-
-1. User can create `.h2uirc` with custom defaults
-2. CLI flags override config file values
-3. Conversion shows nice terminal output with progress
-4. Error messages include actionable suggestions
-
-**Stack additions:** chalk, ora, cosmiconfig (for config file loading)
-
----
-
-## Phase 4: LLM Integration
-
-**Goal:** Optional LLM pass for smarter component naming and cleanup suggestions
-
-**Rationale:** Enhancement layer. The tool works perfectly without LLM — this just makes output smarter. Configurable provider ensures no vendor lock-in.
-
-**Requirements:** (v2 requirements)
-
-- LLM-01, LLM-02, LLM-03, LLM-04, LLM-05
-- SPL-06 (non-semantic splitting by class/ID)
-
-**Total requirements: 6**
-
-**Plans:** 3 plans
-
-Plans:
-**Wave 1**
-
-- [x] 04-01-PLAN.md — SPL-06 + LLM foundation (config types, provider factories, token utilities, Zod schemas)
-
-**Wave 2** *(blocked on Wave 1 completion)*
-
-- [ ] 04-02-PLAN.md — LLM review service + pipeline step
-
-**Wave 3** *(blocked on Wave 2 completion)*
-
-- [ ] 04-03-PLAN.md — CLI integration (--llm flag, config merge, suggestion display)
-
-**Success criteria:**
-
-1. `--llm` flag invokes optional LLM pass
-2. Component names are context-appropriate (not just "Header", "Section")
-3. Multiple LLM providers work (OpenAI, Anthropic, Ollama)
-4. Token estimation shown before API call
-5. Tool works identically without LLM — no regression
-
-**Avoids pitfall:** Over-relying on LLM (Pitfall 1), LLM cost surprises (Pitfall 6)
-
-**Stack additions:** openai, @anthropic-ai/sdk, zod (^3.23.8), tiktoken
-
----
-
-## Phase 5: LLM Code Modification + Browser Preview
-
-**Goal:** LLM directly modifies component code and provides interactive browser preview
-
-**Rationale:** v1 LLM only suggests improvements. v2 LLM applies them automatically. Browser preview enables visual verification before committing changes.
-
-**Requirements:**
-
-- LLM-06: LLM applies naming and cleanup changes directly to code
-- LLM-07: Interactive component tree preview in browser
-- POL-01: Browser preview server (optional live reload)
-
-**Total requirements: 3**
-
-**Plans:** 2 plans
-
-Plans:
-**Wave 1**
-
-- [ ] 05-01-PLAN.md — LLM code modification service (ComponentCodeSchema, runLLMModify, guardrail validation, llmModifyStep)
-
-**Wave 2** *(blocked on Wave 1 completion)*
-
-- [ ] 05-02-PLAN.md — Browser preview server (Vite preview + WebSocket live reload, React component tree visualization, preview CLI command)
-
-**Success criteria:**
-
-1. LLM modifies component code without manual intervention
-2. `h2ui preview` starts local preview server
-3. Browser shows component tree with interactive editing
-
-**Stack additions:** vite@^6.0.0, ws@^8.18.0
-
----
-
-## Phase Dependency Graph
-
-```
-Phase 1 (Core CLI + JSX)
-    │
-    ▼
-Phase 2 (Splitting + CSS) ──depends on── Phase 1 pipeline
-    │
-    ▼
-Phase 3 (Config + Polish) ──depends on── Phase 1 CLI structure
-    │
-    ▼
-Phase 4 (LLM) ──depends on── Phase 1+2 output structure
-    │
-    ▼
-Phase 5 (LLM Modify + Preview) ──depends on── Phase 4 LLM foundation
-```
-
-**Note:** Phase 3 can run in parallel with Phase 2 if needed — config file loading is independent of component splitting.
-
-## Out of Scope for v1 Roadmap
+## Backlog
 
 | Feature | When | Why |
 |---------|------|-----|
@@ -199,32 +34,9 @@ Phase 5 (LLM Modify + Preview) ──depends on── Phase 4 LLM foundation
 | Batch conversion | v1.x | Single-file conversion first |
 | Watch mode | v1.x | Manual re-run for v1 |
 | Tailwind inference | v2+ | CSS Modules first |
-| LLM caching (LLM-05) | rejected | D-06 decision: no caching — each conversion triggers fresh LLM call |
+| LLM caching (LLM-05) | rejected | D-06 decision: no caching |
 
 ---
-*Roadmap created: 2026-05-21*
-**UI hint:** No (CLI tool, no visual UI)
 
-### Phase 05.1: LLM Fidelity + CLI Simplification (INSERTED)
-
-**Goal:** Merge LLM review+modify into single fidelity step; simplify CLI flags
-
-**Rationale:** LLM should validate 100% HTML fidelity before approving component output. CLI flags too scattered — consolidate.
-
-**Requirements:**
-
-- **Fidelity-01:** LLM validates generated components against original HTML (structure, attributes, text content)
-- **Fidelity-02:** Single unified LLM step (merge llmReviewStep + llmModifyStep into llmFidelityStep)
-- **CLI-07:** `--type tsx|jsx` replaces `--typescript`/`--no-typescript`
-- **CLI-08:** LLM enabled by default; `--llm off` to disable
-- **CLI-09:** Remove `--llm-mode`, `--llm-provider`, `--llm-model` from CLI (move to config file)
-
-**Depends on:** Phase 5
-**Plans:** 2 plans
-
-Plans:
-**Wave 1**
-- [ ] 05.1-01-PLAN.md — CLI simplification (--type, --llm on/off, remove deprecated flags)
-
-**Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 05.1-02-PLAN.md — LLM fidelity step merge (llmFidelityStep replacing llmReviewStep + llmModifyStep, fidelity validation)
+*Archived milestone details: `.planning/milestones/v1.0-ROADMAP.md`*
+*UI hint:* No (CLI tool, no visual UI)

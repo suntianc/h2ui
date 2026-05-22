@@ -8,69 +8,74 @@ A CLI tool that converts high-fidelity HTML into reusable React components. Inpu
 
 Take any HTML page and produce production-ready React components with properly extracted styles — in one command.
 
-## Requirements
+## Current State (v1.0 SHIPPED)
 
-### Validated
+**Status:** v1.0 MVP complete — 2026-05-22
+**Tech Stack:** Node.js, TypeScript, Cheerio, css-tree, OpenAI/Anthropic SDK, Vite, WebSocket
+**Lines of Code:** ~7000+ TypeScript across 355 files
 
-- [x] HTML file input via CLI argument *(Phase 1)*
-- [x] Parse full HTML page AST *(Phase 1)*
-- [x] Output React TSX/JSX components (configurable format) *(Phase 1)*
+### Validated Requirements (v1.0)
 
-### Active
+- [x] HTML file input via CLI argument
+- [x] Parse full HTML page AST
+- [x] Output React TSX/JSX components (configurable format)
+- [x] Smart component boundary detection (header, nav, section, footer, etc.)
+- [x] Split HTML into component tree with separate output files
+- [x] Extract CSS and generate reusable CSS Modules
+- [x] Component naming and optimization via configurable LLM provider
+- [x] Config file support (`.h2uirc`, LLM provider/API key, output preferences)
+- [x] Browser preview server with live reload
+- [x] LLM HTML fidelity validation
 
-- [ ] Identify semantic component boundaries (header, nav, section, footer, etc.)
-- [ ] Split HTML into component tree with separate output files
-- [ ] Extract CSS and generate reusable CSS Modules
-- [ ] Component naming and optimization via configurable LLM provider
+## Active (Next Milestone)
+
+- [ ] Batch conversion of multiple HTML files
+- [ ] Watch mode — auto-convert on file change
 - [ ] npm package with npx and global install support
-- [ ] Config file support (LLM provider/API key, output preferences)
 
-### Out of Scope
+## Out of Scope
 
-- WYSIWYG editor / GUI — CLI only for v1
-- Runtime transformation — build-time / offline conversion only
-- Two-way sync (HTML → Component → Back to HTML) — one-way conversion
-- Framework-agnostic output — React-only for v1 (Vue/Svelte etc. deferred)
+| Feature | When | Why |
+|---------|------|-----|
+| WYSIWYG / GUI | — | CLI-only tool |
+| Runtime DOM conversion | — | Build-time / offline conversion only |
+| Two-way sync (HTML ↔ React) | — | One-way conversion |
+| Multi-framework (Vue, Svelte) | v2+ | React-only for v1 |
+| Tailwind CSS inference | v2+ | CSS Modules first |
 
 ## Context
 
-Phase 1 complete (2026-05-21) — CLI + attribute conversion pipeline built and verified. Ready for Phase 2: component splitting + CSS extraction.
-
-Started as a personal project to explore combining AST parsing with LLM augmentation for code generation. The hybrid approach (rules for structure + LLM for naming/semantics) aims for deterministic component splitting with intelligent naming.
-
-## Constraints
-
-- **Tech Stack**: Node.js / TypeScript — natural fit for CLI tooling and AST manipulation
-- **Distribution**: npm package — publishable as CLI and library
-- **LLM Dependency**: Conversion quality depends on LLM; provider must be configurable and offline-fallback capable
+v1.0 shipped in 1 day (2026-05-21 → 2026-05-22) with 16 plans across 6 phases. Initial user feedback indicates demand for batch conversion and watch mode.
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-| -------- | --------- | ------- |
-| Name: h2ui | Short, framework-agnostic, npm-friendly | - Pending |
-| CLI-first | Fits developer workflows, composable with other tools | - Pending |
-| Hybrid: Rules + LLM | Rule engine ensures deterministic structure; LLM refines naming/semantics | - Pending |
-| CSS Modules | Standard React pattern, no extra runtime deps | - Pending |
-| Configurable LLM provider | Users bring their own model (OpenAI, Ollama, etc.) | - Pending |
-| Component tree splitting | Semantic HTML tags (header/nav/section/footer) → component hierarchy | - Pending |
+| Decision | Rationale | Status |
+| -------- | --------- | ------ |
+| Name: h2ui | Short, framework-agnostic, npm-friendly | ✅ |
+| CLI-first | Fits developer workflows, composable with other tools | ✅ |
+| Hybrid: Rules + LLM | Rule engine ensures deterministic structure; LLM refines naming/semantics | ✅ |
+| CSS Modules | Standard React pattern, no extra runtime deps | ✅ |
+| Configurable LLM provider | Users bring their own model (OpenAI, Anthropic, Ollama) | ✅ |
+| Component tree splitting | Semantic HTML tags → component hierarchy | ✅ |
+| No LLM caching | D-06: fresh call per conversion | ✅ |
+| Graceful LLM degradation | D-10: tool works without LLM | ✅ |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
-**After each phase transition** (via `/gsd-transition`):
+**After each phase transition:**
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
 3. New requirements emerged? → Add to Active
 4. Decisions to log? → Add to Key Decisions
 5. "What This Is" still accurate? → Update if drifted
 
-**After each milestone** (via `/gsd-complete-milestone`):
+**After each milestone:**
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-21 after initialization*
+*Last updated: 2026-05-22 after v1.0 milestone*
