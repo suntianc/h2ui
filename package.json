@@ -1,5 +1,5 @@
 {
-  "name": "h2ui",
+  "name": "h2ui-cli",
   "version": "1.0.0",
   "description": "Convert HTML pages to React components",
   "type": "module",

@@ -33,15 +33,22 @@ In the workflow of **Idea (Text) ➔ Design (HTML) ➔ Development (React)**:
 
 ## Installation
 
-Install dependencies in the root directory:
+Install globally via npm:
+
+```bash
+npm install -g h2ui-cli
+```
+
+Or run directly without installation using `npx`:
+
+```bash
+npx h2ui-cli convert <path-to-html-file>
+```
+
+For local development setup, install dependencies and build:
 
 ```bash
 npm install
-```
-
-Compile the project:
-
-```bash
 npm run build
 ```
 
@@ -49,14 +56,15 @@ npm run build
 
 ## Command Line Interface (CLI) Guide
 
-After building, run the CLI using `node dist/bin/h2ui.js`:
+> [!NOTE]
+> If installed globally or running via `npx`, use the executable command `h2ui`. If you are developing locally, replace `h2ui` with `node dist/bin/h2ui.js`.
 
 ### 1. Initialize Configuration Scaffold (`init`)
 
 Generates a `.h2uirc` configuration file to define your default preferences.
 
 ```bash
-node dist/bin/h2ui.js init [--force]
+h2ui init [--force]
 ```
 
 **Scaffold config template (`.h2uirc`)**:
@@ -76,7 +84,7 @@ node dist/bin/h2ui.js init [--force]
 Converts a static HTML file to React TSX/JSX components:
 
 ```bash
-node dist/bin/h2ui.js convert <path-to-html-file> [options]
+h2ui convert <path-to-html-file> [options]
 ```
 
 **Available Options:**
@@ -88,7 +96,7 @@ node dist/bin/h2ui.js convert <path-to-html-file> [options]
 
 **Example:**
 ```bash
-node dist/bin/h2ui.js convert verify-work/dashboard.html --out verify-work/output --llm on
+h2ui convert verify-work/dashboard.html --out verify-work/output --llm on
 ```
 
 ### 3. Live Preview (`preview`)
@@ -96,7 +104,7 @@ node dist/bin/h2ui.js convert verify-work/dashboard.html --out verify-work/outpu
 Starts the local Vite-powered preview server with live reload:
 
 ```bash
-node dist/bin/h2ui.js preview [options]
+h2ui preview [options]
 ```
 
 **Available Options:**
@@ -105,7 +113,7 @@ node dist/bin/h2ui.js preview [options]
 
 **Example:**
 ```bash
-node dist/bin/h2ui.js preview --out verify-work/output --port 3000
+h2ui preview --out verify-work/output --port 3000
 ```
 Open `http://localhost:3000` in your browser to view your converted component tree live.
 
