@@ -24,7 +24,7 @@ export function extractStyleTags(
       css: processedCSS,
     });
 
-    warnings.push(`Extracted <style> tag ${i + 1} to ${name}.module.css`);
+    warnings.push(`Extracted <style> tag ${i + 1} to ${name}.css`);
   });
 
   return cssFiles;

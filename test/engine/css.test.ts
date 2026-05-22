@@ -99,6 +99,19 @@ describe('CSS Module generation', () => {
   it('returns empty for no properties', () => {
     expect(generateCSSModule('Empty', {})).toBe('');
   });
+
+  it('generates css module with composes when provided', () => {
+    const css = generateCSSModule('Header', { background: 'blue' }, "shared from './shared.module.css'");
+    expect(css).toContain('.header {');
+    expect(css).toContain('composes: shared from \'./shared.module.css\';');
+    expect(css).toContain('background: blue;');
+  });
+
+  it('generates css module with only composes if properties are empty', () => {
+    const css = generateCSSModule('Header', {}, "shared from './shared.module.css'");
+    expect(css).toContain('.header {');
+    expect(css).toContain('composes: shared from \'./shared.module.css\';');
+  });
 });
 
 describe('shared style extraction', () => {
@@ -170,6 +183,8 @@ describe('shared style extraction', () => {
     expect(result.shared!.css).toContain('padding: 10px;');
     // Header should still have background (unique to it)
     expect(result.updatedComponents[0].cssProperties.background).toBe('blue');
+    expect(result.sharedComponents.has('Header')).toBe(true);
+    expect(result.sharedComponents.has('Footer')).toBe(true);
   });
 
   it('returns null for single component', () => {

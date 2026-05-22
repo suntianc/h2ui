@@ -1,7 +1,7 @@
 import prettier from 'prettier';
 import path from 'node:path';
 import { writeFile, getOutputFilename } from '../../util/file.js';
-import type { PipelineStep, PipelineContext, ComponentOutput, CSSFile } from '../../types/pipeline.js';
+import type { PipelineStep, PipelineContext, ComponentOutput, CSSFile, ComponentNode } from '../../types/pipeline.js';
 
 async function formatCode(code: string, isTypescript: boolean): Promise<string> {
   try {
@@ -44,6 +44,22 @@ async function writeFormattedFile(
   return writeFile(outputPath, formatted);
 }
 
+function toPreviewTree(node: ComponentNode): {
+  name: string;
+  tag: string;
+  isRepeated?: boolean;
+  repeatCount?: number;
+  children: ReturnType<typeof toPreviewTree>[];
+} {
+  return {
+    name: node.name,
+    tag: node.tag,
+    isRepeated: node.isRepeated,
+    repeatCount: node.repeatCount,
+    children: node.children.map(toPreviewTree),
+  };
+}
+
 export const generateStep: PipelineStep = {
   name: 'generate',
 
@@ -72,7 +88,8 @@ export const generateStep: PipelineStep = {
           for (const cssFile of ctx.cssFiles) {
             if (!cssFile.css || !cssFile.css.trim()) continue;
 
-            const cssFileName = `${cssFile.name}.module.css`;
+            const isGlobal = cssFile.name === 'global' || cssFile.name.startsWith('global-');
+            const cssFileName = isGlobal ? `${cssFile.name}.css` : `${cssFile.name}.module.css`;
             const cssFilePath = path.join(outputDir, cssFileName);
             await writeFile(cssFilePath, cssFile.css);
             writtenFiles.push(cssFilePath);
@@ -90,6 +107,27 @@ export const generateStep: PipelineStep = {
               writtenFiles.push(cssFilePath);
             }
           }
+        }
+
+        // Persist component tree for preview server consumption.
+        if (ctx.componentTree) {
+          const treePath = path.join(outputDir, '.h2ui-component-tree.json');
+          const headLinks: string[] = [];
+          if (ctx.$) {
+            const $ = ctx.$;
+            $('link').each((_, el) => {
+              const linkHtml = $(el).toString();
+              if (linkHtml) {
+                headLinks.push(linkHtml);
+              }
+            });
+          }
+          const treeData = {
+            ...toPreviewTree(ctx.componentTree),
+            headLinks,
+          };
+          await writeFile(treePath, JSON.stringify(treeData, null, 2));
+          writtenFiles.push(treePath);
         }
 
         // Set output path to the directory for reference

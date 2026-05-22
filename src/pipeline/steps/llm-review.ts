@@ -1,6 +1,10 @@
 import type { PipelineStep, PipelineContext } from '../../types/pipeline.js';
 import { runLLMReview } from '../../llm/llm-review.js';
 
+/**
+ * @deprecated Use llmFidelityStep instead. This step is kept for backward compatibility during migration.
+ * llmFidelityStep combines review, modify, and fidelity validation in a single step.
+ */
 export const llmReviewStep: PipelineStep = {
   name: 'llm-review',
 

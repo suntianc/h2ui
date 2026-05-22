@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface ComponentNodeData {
   name: string;
   tag: string;

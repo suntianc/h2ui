@@ -18,14 +18,11 @@ program
   .description('Convert an HTML file to React TSX/JSX')
   .argument('<file>', 'path to HTML file')
   .option('--out <directory>', 'output directory (default: ./h2ui_output/)')
-  .option('--no-typescript', 'output .jsx instead of .tsx')
+  .option('--type <type>', 'output file type: tsx or jsx (default: tsx)', /^(tsx|jsx)$/, 'tsx')
   .option('--no-split', 'disable component splitting (single-file output)')
   .option('--strict', 'promote all warnings to errors')
-  .option('--llm', 'enable LLM review (requires API key)')
-  .option('--llm-provider <provider>', 'LLM provider: openai | anthropic | ollama')
-  .option('--llm-model <model>', 'model name (e.g., gpt-4o-mini, claude-sonnet-4-7-20250514)')
-  .option('--llm-mode <mode>', 'LLM mode: off | auto | always')
-  .action(async (file: string, options: { out?: string; typescript?: boolean; strict?: boolean; split?: boolean; llm?: boolean; llmProvider?: string; llmModel?: string; llmMode?: string }) => {
+  .option('--llm <mode>', 'LLM mode: on or off (default: on)', (value) => value !== 'off' ? 'on' : 'off', 'on')
+  .action(async (file: string, options: { out?: string; type?: string; strict?: boolean; split?: boolean; llm?: string }) => {
     showBanner();
     const { config: configFile } = await loadConfig();
     await convertCommand(file, options, configFile);

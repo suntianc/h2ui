@@ -27,11 +27,14 @@ export const cssStep: PipelineStep = {
       // (extractCssProperties in convert.ts sets cssProperties per component)
 
       // Step 3: Extract shared styles across components
-      const { shared, updatedComponents } = extractSharedStyles(ctx.components);
+      const { shared, updatedComponents, sharedComponents } = extractSharedStyles(ctx.components);
 
       // Step 4: Generate CSS Module content for each component
       for (const comp of updatedComponents) {
-        const css = generateCSSModule(comp.name, comp.cssProperties);
+        const composesVal = sharedComponents.has(comp.name)
+          ? "shared from './shared.module.css'"
+          : undefined;
+        const css = generateCSSModule(comp.name, comp.cssProperties, composesVal);
         if (css) {
           cssFiles.push({ name: comp.name, css });
         }

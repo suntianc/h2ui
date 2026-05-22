@@ -14,15 +14,19 @@ function componentToClassName(name: string): string {
  */
 export function generateCSSModule(
   name: string,
-  properties: Record<string, string>
+  properties: Record<string, string>,
+  composes?: string
 ): string {
   const cleaned = cleanProperties(condenseProperties(properties));
   const keys = Object.keys(cleaned);
 
-  if (keys.length === 0) return '';
+  if (keys.length === 0 && !composes) return '';
 
   const className = componentToClassName(name);
   const lines = keys.map(prop => `  ${prop}: ${cleaned[prop]};`);
+  if (composes) {
+    lines.unshift(`  composes: ${composes};`);
+  }
 
   return `.${className} {\n${lines.join('\n')}\n}\n`;
 }
@@ -36,9 +40,9 @@ export function generateCSSModule(
  */
 export function extractSharedStyles(
   components: ComponentOutput[]
-): { shared: CSSFile | null; updatedComponents: ComponentOutput[] } {
+): { shared: CSSFile | null; updatedComponents: ComponentOutput[]; sharedComponents: Set<string> } {
   if (components.length < 2) {
-    return { shared: null, updatedComponents: components };
+    return { shared: null, updatedComponents: components, sharedComponents: new Set() };
   }
 
   // Collect all declarations with their component origins
@@ -95,7 +99,7 @@ export function extractSharedStyles(
 
   // Check threshold (at least 3 shared declarations)
   if (Object.keys(sharedDeclarations).length < 3) {
-    return { shared: null, updatedComponents: components };
+    return { shared: null, updatedComponents: components, sharedComponents: new Set() };
   }
 
   // Generate shared CSS Module
@@ -105,17 +109,25 @@ export function extractSharedStyles(
     css: cssContent || '',
   };
 
+  const sharedComponents = new Set<string>();
+
   // Remove shared declarations from individual components
   const updatedComponents = components.map(comp => {
     const remaining: Record<string, string> = {};
+    let hasShared = false;
     for (const [prop, value] of Object.entries(comp.cssProperties || {})) {
       const key = `${prop}:${value}`;
-      if (!sharedKeys.has(key)) {
+      if (sharedKeys.has(key)) {
+        hasShared = true;
+      } else {
         remaining[prop] = value;
       }
+    }
+    if (hasShared) {
+      sharedComponents.add(comp.name);
     }
     return { ...comp, cssProperties: remaining };
   });
 
-  return { shared: sharedCSS, updatedComponents };
+  return { shared: sharedCSS, updatedComponents, sharedComponents };
 }

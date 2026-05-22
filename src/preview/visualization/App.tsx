@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ComponentNode } from './ComponentNode';
 import { initWebSocketClient, type WSClient } from '../client';
 
@@ -17,15 +17,31 @@ export function App() {
   const [lastReload, setLastReload] = useState<Date | null>(null);
 
   useEffect(() => {
-    // Load initial component tree from parent window or localStorage
-    const stored = localStorage.getItem('h2ui-component-tree');
-    if (stored) {
+    async function loadComponentTree() {
       try {
-        setComponentTree(JSON.parse(stored));
+        const resp = await fetch('/__h2ui_component_tree', { cache: 'no-store' });
+        if (resp.ok) {
+          const tree = await resp.json();
+          setComponentTree(tree);
+          localStorage.setItem('h2ui-component-tree', JSON.stringify(tree));
+          return;
+        }
       } catch (e) {
-        console.error('Failed to parse component tree:', e);
+        console.warn('Failed to fetch component tree from preview server:', e);
+      }
+
+      // Fallback: localStorage
+      const stored = localStorage.getItem('h2ui-component-tree');
+      if (stored) {
+        try {
+          setComponentTree(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse component tree from localStorage:', e);
+        }
       }
     }
+
+    void loadComponentTree();
 
     // Initialize WebSocket client
     const client: WSClient = initWebSocketClient({
@@ -35,15 +51,7 @@ export function App() {
       onReload: (data) => {
         console.log('Reload triggered:', data);
         setLastReload(new Date());
-        // Refresh component tree from localStorage
-        const refreshed = localStorage.getItem('h2ui-component-tree');
-        if (refreshed) {
-          try {
-            setComponentTree(JSON.parse(refreshed));
-          } catch (e) {
-            console.error('Failed to parse component tree from localStorage:', e);
-          }
-        }
+        void loadComponentTree();
       },
     });
 

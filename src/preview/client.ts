@@ -14,7 +14,7 @@ export interface WSClient {
 
 export function initWebSocketClient(options: WSClientOptions = {}): WSClient {
   const {
-    url = `ws://localhost:5173`,
+    url = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/__h2ui_preview_ws`,
     onConnect,
     onDisconnect,
     onReconnecting,

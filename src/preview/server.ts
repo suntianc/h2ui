@@ -1,4 +1,5 @@
-import { preview } from 'vite';
+import { build as viteBuild, preview as vitePreview } from 'vite';
+import react from '@vitejs/plugin-react';
 import { WebSocketServer, type WebSocket } from 'ws';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -9,22 +10,145 @@ export interface PreviewServerOptions {
   previewDir?: string;
 }
 
+interface PreviewTreeNode {
+  name: string;
+  children: PreviewTreeNode[];
+}
+
+function ensureDir(dir: string): void {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+function resolveRootComponentName(outputDir: string): string {
+  const treePath = path.join(outputDir, '.h2ui-component-tree.json');
+  if (fs.existsSync(treePath)) {
+    const tree = JSON.parse(fs.readFileSync(treePath, 'utf8')) as PreviewTreeNode;
+    if (tree?.name) return tree.name;
+  }
+
+  const tsxFiles = fs
+    .readdirSync(outputDir)
+    .filter((f) => f.endsWith('.tsx') || f.endsWith('.jsx'))
+    .sort();
+  if (tsxFiles.length === 0) {
+    throw new Error(`No .tsx/.jsx files found in output directory: ${outputDir}`);
+  }
+  return path.basename(tsxFiles[0], path.extname(tsxFiles[0]));
+}
+
+function syncOutputFiles(outputDir: string, componentsDir: string): void {
+  ensureDir(componentsDir);
+  const files = fs.readdirSync(outputDir);
+  for (const file of files) {
+    if (
+      file.endsWith('.tsx') ||
+      file.endsWith('.jsx') ||
+      file.endsWith('.css') ||
+      file.endsWith('.module.css')
+    ) {
+      fs.copyFileSync(path.join(outputDir, file), path.join(componentsDir, file));
+    }
+  }
+}
+
+function readHeadLinks(outputDir: string): string[] {
+  const treePath = path.join(outputDir, '.h2ui-component-tree.json');
+  if (fs.existsSync(treePath)) {
+    try {
+      const tree = JSON.parse(fs.readFileSync(treePath, 'utf8'));
+      if (tree && Array.isArray(tree.headLinks)) {
+        return tree.headLinks;
+      }
+    } catch (_) {}
+  }
+  return [];
+}
+
+function writePreviewApp(appRoot: string, rootComponentName: string, headLinks: string[] = []): void {
+  const indexHtml = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>h2ui Preview</title>
+    ${headLinks.join('\n    ')}
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      (function () {
+        var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        var ws = new WebSocket(proto + '://' + location.host + '/__h2ui_preview_ws');
+        ws.onmessage = function (event) {
+          try {
+            var data = JSON.parse(event.data);
+            if (data && data.type === 'reload') location.reload();
+          } catch (_) {}
+        };
+      })();
+    </script>
+  </body>
+</html>
+`;
+
+  const mainTsx = `import React from 'react';
+import { createRoot } from 'react-dom/client';
+import RootComponent from './components/${rootComponentName}';
+
+const root = createRoot(document.getElementById('root')!);
+root.render(<RootComponent />);
+`;
+
+  const srcDir = path.join(appRoot, 'src');
+  ensureDir(srcDir);
+  fs.writeFileSync(path.join(appRoot, 'index.html'), indexHtml, 'utf8');
+  fs.writeFileSync(path.join(srcDir, 'main.tsx'), mainTsx, 'utf8');
+}
+
+async function buildPreviewApp(appRoot: string): Promise<void> {
+  await viteBuild({
+    root: appRoot,
+    plugins: [react()],
+    logLevel: 'warn',
+    build: {
+      outDir: path.join(appRoot, 'dist'),
+      emptyOutDir: true,
+    },
+  });
+}
+
 export async function startPreviewServer(
   outputDir: string,
   options: PreviewServerOptions = {},
 ): Promise<{ server: any; wss: WebSocketServer }> {
-  const { port = 5173, host = 'localhost' } = options;
+  const { port = 5173, host = 'localhost', previewDir = process.cwd() } = options;
+  const runtimeRoot = path.join(path.resolve(previewDir), '.h2ui_preview_dist');
+  const componentsDir = path.join(runtimeRoot, 'src/components');
 
-  // Start Vite preview server serving the preview visualization app
-  const vitePreview = await preview({
-    root: path.join(__dirname, 'visualization'),
+  ensureDir(runtimeRoot);
+  syncOutputFiles(outputDir, componentsDir);
+  const rootComponentName = resolveRootComponentName(outputDir);
+  const headLinks = readHeadLinks(outputDir);
+  writePreviewApp(runtimeRoot, rootComponentName, headLinks);
+  await buildPreviewApp(runtimeRoot);
+
+  const server = await vitePreview({
+    root: runtimeRoot,
     preview: { port, host },
-    server: { proxy: {} },
+    build: {
+      outDir: path.join(runtimeRoot, 'dist'),
+    },
+    logLevel: 'warn',
   });
 
-  // Attach WebSocket server for live reload
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const wss = new WebSocketServer({ server: vitePreview.httpServer as any });
+  const wss = new WebSocketServer({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    server: server.httpServer as any,
+    path: '/__h2ui_preview_ws',
+  });
 
   wss.on('connection', (ws: WebSocket) => {
     console.log('[preview] Client connected');
@@ -32,108 +156,35 @@ export async function startPreviewServer(
     ws.on('error', (err: Error) => console.warn('[preview] WebSocket error:', err.message));
   });
 
-  // Watch output directory for changes using fs.watch (recursive)
-  const watchDir = path.resolve(outputDir);
-  watchDirectory(watchDir, (filePath: string) => {
-    console.log(`[preview] File changed: ${filePath}`);
-    // Broadcast reload to all connected clients
-    wss.clients.forEach((client: WebSocket) => {
-      if (client.readyState === 1 /* WebSocket.OPEN */) {
-        client.send(JSON.stringify({ type: 'reload', file: filePath }));
+  const watcher = fs.watch(outputDir, { recursive: true }, async (_eventType, filename) => {
+    if (!filename) return;
+    const ext = path.extname(filename);
+    if (ext !== '.tsx' && ext !== '.ts' && ext !== '.jsx' && ext !== '.js' && ext !== '.css') return;
+
+    try {
+      syncOutputFiles(outputDir, componentsDir);
+      const nextRoot = resolveRootComponentName(outputDir);
+      const headLinks = readHeadLinks(outputDir);
+      writePreviewApp(runtimeRoot, nextRoot, headLinks);
+      await buildPreviewApp(runtimeRoot);
+    } catch (err: any) {
+      console.warn(`[preview] Rebuild failed: ${err.message}`);
+      return;
+    }
+
+    wss.clients.forEach((client) => {
+      if (client.readyState === 1) {
+        client.send(JSON.stringify({ type: 'reload', file: filename }));
       }
     });
   });
 
-  return { server: vitePreview, wss };
-}
+  watcher.on('error', (err: Error) => {
+    console.warn(`[preview] Watcher error: ${err.message}`);
+  });
 
-interface Watcher {
-  close: () => void;
-}
+  console.log(`[preview] Preview server running at http://localhost:${port}`);
+  console.log(`[preview] Runtime dir: ${runtimeRoot}`);
 
-/**
- * Recursively watch a directory for file changes using fs.watch.
- * Falls back to non-recursive watch if recursive is not supported.
- */
-function watchDirectory(
-  dirPath: string,
-  onChange: (filePath: string) => void,
-): Watcher {
-  const watchers: Watcher[] = [];
-  const debounceTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
-  const DEBOUNCE_MS = 100;
-
-  function debouncedHandler(filePath: string) {
-    const existing = debounceTimers.get(filePath);
-    if (existing) {
-      clearTimeout(existing);
-    }
-    const timer = setTimeout(() => {
-      debounceTimers.delete(filePath);
-      onChange(filePath);
-    }, DEBOUNCE_MS);
-    debounceTimers.set(filePath, timer);
-  }
-
-  function addDir(dir: string) {
-    try {
-      const watcher = fs.watch(dir, { recursive: false }, (eventType, filename) => {
-        if (!filename) return;
-        const fullPath = path.join(dir, filename);
-        const stats = fs.statSync(fullPath);
-        if (stats.isDirectory()) {
-          // New subdirectory - start watching it too
-          addDir(fullPath);
-        } else if (stats.isFile()) {
-          debouncedHandler(fullPath);
-        }
-      });
-      watchers.push(watcher);
-    } catch (err: any) {
-      console.warn(`[preview] Cannot watch directory ${dir}: ${err.message}`);
-    }
-  }
-
-  // Check if recursive fs.watch is supported
-  try {
-    const testWatcher = fs.watch(dirPath, { recursive: true }, () => {});
-    watchers.push(testWatcher);
-    // With recursive support, just watch the top directory
-    testWatcher.on('change', (_, filename) => {
-      if (filename) {
-        const name = typeof filename === 'string' ? filename : filename.toString('utf8');
-        const fullPath = path.join(dirPath, name);
-        debouncedHandler(fullPath);
-      }
-    });
-  } catch {
-    // Recursive not supported - walk directory tree
-    addDir(dirPath);
-
-    // Also watch for new subdirectories
-    const newDirWatcher = fs.watch(dirPath, (eventType, filename) => {
-      if (!filename) return;
-      const name = String(filename);
-      const fullPath = path.join(dirPath, name);
-      try {
-        const stats = fs.statSync(fullPath);
-        if (stats.isDirectory()) {
-          addDir(fullPath);
-        }
-      } catch (err: any) {
-        console.warn(`[preview] Cannot stat directory ${fullPath}: ${err.message}`);
-      }
-    });
-    watchers.push(newDirWatcher);
-  }
-
-  return {
-    close() {
-      for (const w of watchers) {
-        w.close();
-      }
-      debounceTimers.forEach((t) => clearTimeout(t));
-      debounceTimers.clear();
-    },
-  };
+  return { server, wss };
 }

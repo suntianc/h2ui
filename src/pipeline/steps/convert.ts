@@ -129,6 +129,16 @@ function generateComponent(
 
   const lines: string[] = [];
 
+  // Import global CSS if any style tags exist
+  const styleTagsCount = $('style').length;
+  for (let i = 0; i < styleTagsCount; i++) {
+    const name = i === 0 ? 'global' : `global-${i + 1}`;
+    lines.push(`import './${name}.css';`);
+  }
+  if (styleTagsCount > 0) {
+    lines.push('');
+  }
+
   if (isTypescript) {
     lines.push('interface Props {}');
     lines.push('');
@@ -166,6 +176,8 @@ function generateComponentCode(
   warnings: string[]
 ): string {
   const lines: string[] = [];
+  lines.push('import React from \'react\';');
+  lines.push('');
 
   // Import child components
   for (const child of node.children) {
@@ -229,6 +241,16 @@ function generateRootComponent(
   warnings: string[]
 ): string {
   const lines: string[] = [];
+  lines.push('import React from \'react\';');
+
+  // Import global CSS if any style tags exist
+  const styleTagsCount = $('style').length;
+  for (let i = 0; i < styleTagsCount; i++) {
+    const name = i === 0 ? 'global' : `global-${i + 1}`;
+    lines.push(`import './${name}.css';`);
+  }
+
+  lines.push('');
 
   // Import child components
   for (const child of root.children) {

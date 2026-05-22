@@ -19,7 +19,7 @@ export const previewCommand = new Command('preview')
     console.log(`[preview] Port: ${port}`);
 
     try {
-      const { server, wss } = await startPreviewServer(outputDir, { port });
+      const { server, wss } = await startPreviewServer(outputDir, { port, previewDir: process.cwd() });
 
       console.log(`[preview] Preview server running at http://localhost:${port}`);
       console.log(`[preview] Open browser to view component tree`);
