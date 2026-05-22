@@ -36,13 +36,13 @@ In the workflow of **Idea (Text) ➔ Design (HTML) ➔ Development (React)**:
 Install globally via npm:
 
 ```bash
-npm install -g h2ui-cli
+npm install -g h2ui
 ```
 
 Or run directly without installation using `npx`:
 
 ```bash
-npx h2ui-cli convert <path-to-html-file>
+npx h2ui convert <path-to-html-file>
 ```
 
 For local development setup, install dependencies and build:
@@ -70,14 +70,78 @@ h2ui init [--force]
 **Scaffold config template (`.h2uirc`)**:
 ```json
 {
-  "_comment": "h2ui configuration file.",
+  "_comment": "h2ui configuration file. Full config options: https://github.com/suntianc/h2ui",
   "out": "./h2ui_output/",
   "typescript": true,
   "strict": false,
   "split": true,
-  "cssMode": "module"
+  "cssMode": "module",
+  "llm": {
+    "_comment": "LLM configuration (optional, omit to disable LLM)",
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "mode": "auto",
+    "baseURL": "https://api.openai.com/v1",
+    "apiKey": "your-api-key-here"
+  }
 }
 ```
+
+**Complete configuration with all options:**
+
+```json
+{
+  "out": "./components_output/",
+  "typescript": true,
+  "strict": false,
+  "split": true,
+  "cssMode": "module",
+  "llm": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "mode": "auto",
+    "baseURL": "https://api.openai.com/v1",
+    "apiKey": "sk-..."
+  }
+}
+```
+
+**Configuration options explained:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `out` | `string` | `./h2ui_output/` | Output directory for generated components |
+| `typescript` | `boolean` | `true` | Generate `.tsx` files (false for `.jsx`) |
+| `strict` | `boolean` | `false` | Treat all warnings as errors, halt execution |
+| `split` | `boolean` | `true` | Split HTML into component tree (false = single file) |
+| `cssMode` | `string` | `module` | CSS output mode: `module`, `scoped`, `inline`, `global` |
+| `llm` | `object` | — | LLM configuration (omit to disable LLM features) |
+
+**LLM Configuration:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `llm.provider` | `string` | `openai` | LLM provider: `openai`, `anthropic`, `ollama` |
+| `llm.model` | `string` | `gpt-4o-mini` | Model name (provider-specific) |
+| `llm.mode` | `string` | `auto` | LLM behavior: `off` (disable), `auto` (smart), `always` (force) |
+| `llm.baseURL` | `string` | — | Custom API endpoint (for Ollama or OpenAI-compatible APIs) |
+| `llm.apiKey` | `string` | — | API key (or set via `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` env) |
+
+**Provider-specific models:**
+
+| Provider | Default Model | Other Options |
+|----------|---------------|---------------|
+| `openai` | `gpt-4o-mini` | `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo` |
+| `anthropic` | `claude-3-5-haiku-latest` | `claude-3-5-sonnet-latest`, `claude-3-opus-latest` |
+| `ollama` | `llama3` | Any model available in your Ollama instance |
+
+**Usage notes:**
+
+- API keys can also be set via environment variables: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`
+- `mode: "auto"` enables LLM only when it improves naming (recommended)
+- `mode: "always"` forces LLM on every conversion
+- `mode: "off"` completely disables LLM features
+- For local Ollama, set `baseURL` to your Ollama server URL (e.g., `http://localhost:11434/v1`)
 
 ### 2. Convert HTML to React (`convert`)
 
