@@ -33,6 +33,16 @@ export interface PipelineContext {
     boundary_changes: Array<{ component_id: string; action: 'confirm' | 'reject' | 'modify'; reason: string }>;
     naming_suggestions: Array<{ original: string; suggested: string; rationale: string }>;
     cleanup_hints: string[];
+    /** Modified components from llm-modify (now unified in llm-fidelity) */
+    components?: Array<{ name: string; code: string; rationale: string }>;
+    /** Fidelity report from llm-fidelity step */
+    fidelity_report?: {
+      structure_match: boolean;
+      attribute_preservation: Array<{ component: string; missing_attributes: string[] }>;
+      text_content_match: boolean;
+      css_preservation: boolean;
+      fidelity_notes: string[];
+    };
     _fallback?: boolean | null; // null = LLM call failed, undefined = not set
   };
 }

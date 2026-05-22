@@ -11,13 +11,11 @@ export async function convertCommand(
   file: string,
   options: {
     out?: string;
-    typescript?: boolean;
+    type?: string;
     strict?: boolean;
     split?: boolean;
-    llm?: boolean;
-    llmProvider?: string;
-    llmModel?: string;
-    llmMode?: string;
+    llm?: string;
+    llmConfig?: LLMConfig;  // For programmatic callers passing LLMConfig directly
   },
   configFile: Partial<H2uiConfig> = {},
 ): Promise<void> {
@@ -40,7 +38,7 @@ export async function convertCommand(
   // Merge: CLI flags > config file > defaults
   const mergedConfig: ConvertOptions = {
     out: options.out ?? configFile.out ?? DEFAULT_OPTIONS.out,
-    typescript: options.typescript !== undefined ? options.typescript : (configFile.typescript ?? DEFAULT_OPTIONS.typescript),
+    typescript: (options.type ?? 'tsx') === 'tsx',
     strict: options.strict !== undefined ? options.strict : (configFile.strict ?? DEFAULT_OPTIONS.strict),
     split: options.split !== undefined ? options.split : (configFile.split ?? DEFAULT_OPTIONS.split),
     // Note: If --css-mode CLI flag is added in future, update to:
@@ -48,14 +46,17 @@ export async function convertCommand(
     cssMode: configFile.cssMode ?? DEFAULT_OPTIONS.cssMode,
   };
 
-  // Merge LLM config: CLI --llm-* flags > config file > defaults
-  // --llm flag alone sets mode='always'
+  // Merge LLM config: programmatic llmConfig > CLI --llm flag > config file > defaults
+  // LLM enabled by default unless --llm off is specified
   let llmConfig: LLMConfig | undefined;
-  if (options.llm || configFile.llm) {
+  if (options.llmConfig) {
+    // Programmatic caller passed LLMConfig directly (CR-01 fix)
+    llmConfig = options.llmConfig;
+  } else if (options.llm !== 'off') {
     llmConfig = {
-      provider: (options.llmProvider ?? configFile.llm?.provider ?? DEFAULT_LLM_CONFIG.provider) as LLMConfig['provider'],
-      model: options.llmModel ?? configFile.llm?.model ?? DEFAULT_LLM_CONFIG.model,
-      mode: (options.llmMode ?? (options.llm ? 'always' : configFile.llm?.mode ?? DEFAULT_LLM_CONFIG.mode)) as LLMConfig['mode'],
+      provider: (configFile.llm?.provider ?? DEFAULT_LLM_CONFIG.provider) as LLMConfig['provider'],
+      model: configFile.llm?.model ?? DEFAULT_LLM_CONFIG.model,
+      mode: configFile.llm?.mode ?? 'auto',
       baseURL: configFile.llm?.baseURL,
       apiKey: configFile.llm?.apiKey,
     };
@@ -88,10 +89,10 @@ export async function convertCommand(
     pipeline.addStep(convertStep);
   }
 
-  // Add LLM review step BEFORE generateStep so results can influence output
+  // Add unified LLM fidelity step BEFORE generateStep so results can influence output
   if (llmConfig && llmConfig.mode !== 'off') {
-    const { llmReviewStep } = await import('../../pipeline/steps/llm-review.js');
-    pipeline.addStep(llmReviewStep);
+    const { llmFidelityStep } = await import('../../pipeline/steps/llm-fidelity.js');
+    pipeline.addStep(llmFidelityStep);
   }
 
   pipeline.addStep(generateStep);
@@ -171,6 +172,28 @@ export async function convertCommand(
             console.log('\nBoundary changes:');
             for (const b of ctx.llmResult.boundary_changes) {
               console.log(`  ${b.action.toUpperCase()} ${b.component_id}: ${b.reason}`);
+            }
+          }
+
+          if (ctx.llmResult.fidelity_report) {
+            const fr = ctx.llmResult.fidelity_report;
+            console.log('\nFidelity Report:');
+            console.log(`  Structure match: ${fr.structure_match ? '✓' : '✗'}`);
+            console.log(`  Text content match: ${fr.text_content_match ? '✓' : '✗'}`);
+            console.log(`  CSS preservation: ${fr.css_preservation ? '✓' : '✗'}`);
+            if (fr.attribute_preservation.length > 0) {
+              console.log('  Missing attributes:');
+              for (const ap of fr.attribute_preservation) {
+                if (ap.missing_attributes.length > 0) {
+                  console.log(`    ${ap.component}: ${ap.missing_attributes.join(', ')}`);
+                }
+              }
+            }
+            if (fr.fidelity_notes.length > 0) {
+              console.log('  Notes:');
+              for (const note of fr.fidelity_notes) {
+                console.log(`    - ${note}`);
+              }
             }
           }
         }
