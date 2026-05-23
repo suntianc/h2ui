@@ -126,6 +126,42 @@
 
 ---
 
+## v1.1 Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| BATCH-01 | Phase 6 | Pending |
+| BATCH-02 | Phase 6 | Pending |
+| BATCH-03 | Phase 6 | Pending |
+| BATCH-04 | Phase 6 | Pending |
+| BATCH-05 | Phase 6 | Pending |
+| BATCH-06 | Phase 6 | Pending |
+| BATCH-07 | Phase 6 | Pending |
+| VUE-01 | Phase 7 | Pending |
+| VUE-02 | Phase 7 | Pending |
+| VUE-03 | Phase 7 | Pending |
+| VUE-04 | Phase 7 | Pending |
+| VUE-05 | Phase 7 | Pending |
+| VUE-06 | Phase 7 | Pending |
+| VUE-07 | Phase 7 | Pending |
+| AGENT-01 | Phase 8 | Pending |
+| AGENT-02 | Phase 8 | Pending |
+| AGENT-03 | Phase 8 | Pending |
+| AGENT-04 | Phase 8 | Pending |
+| AGENT-05 | Phase 8 | Pending |
+| AGENT-06 | Phase 8 | Pending |
+| AGENT-07 | Phase 8 | Pending |
+| AGENT-08 | Phase 8 | Pending |
+| AGENT-09 | Phase 8 | Pending |
+| AGENT-10 | Phase 8 | Pending |
+
+**Coverage:**
+- v1.1 requirements: 24 total (7 + 7 + 10)
+- Mapped to phases: 24
+- Unmapped: 0 ✓
+
+---
+
 ## v1.1 Requirements
 
 ### Batch Conversion
@@ -183,4 +219,4 @@
 ---
 
 *Requirements defined: 2026-05-21*
-*Last updated: 2026-05-23 — v1.1 requirements added*
+*Last updated: 2026-05-23 — v1.1 roadmap created*

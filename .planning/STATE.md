@@ -3,59 +3,85 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Batch + Vue3 + Agent
 status: planning
-last_updated: "2026-05-23T07:41:55.063Z"
+last_updated: "2026-05-23"
 last_activity: 2026-05-23
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
   percent: 0
 ---
 
-# Project State: h2ui
+# State: h2ui v1.1
 
-**Status:** v1.0 SHIPPED
-
-## Milestone Summary
-
-v1.0 MVP complete — all 6 phases finished.
-
-| Phase | Status | Plans |
-|-------|--------|-------|
-| 1 | ✅ Complete | 2/2 |
-| 2 | ✅ Complete | 3/3 |
-| 3 | ✅ Complete | 4/4 |
-| 4 | ✅ Complete | 3/3 |
-| 5 | ✅ Complete | 2/2 |
-| 05.1 | ✅ Complete | 2/2 |
-
-## Last Session
-
-- **Completed:** v1.0 milestone
-- **Shipped:** 2026-05-22
-- **Next:** Start v1.1 planning
+**Current milestone:** v1.1
+**Current phase:** Planning (ROADMAP.md created)
+**Started:** 2026-05-23
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-22)
+**Core value:** Take any HTML page and produce production-ready React/Vue components with properly extracted styles — in one command.
 
-**Core value:** Take any HTML page and produce production-ready React components with properly extracted styles — in one command.
-**Current focus:** Planning next milestone (v1.1)
-
----
-
-## Accumulated Context
-
-### Roadmap Evolution
-
-- Phase 05.1 inserted after Phase 5: LLM HTML fidelity validation
-- v1.0 milestone archived: `.planning/milestones/v1.0-ROADMAP.md`
-- v1.0 requirements archived: `.planning/milestones/v1.0-REQUIREMENTS.md`
+**Current focus:** Planning v1.1 roadmap — batch processing, Vue 3 output, autonomous agent
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-05-23 — Milestone v1.1 started
+- **Milestone:** v1.1
+- **Phase:** Planning
+- **Plan:** None yet (awaiting roadmap approval)
+- **Status:** Not started
+
+## Progress
+
+### v1.1 Phase Progress
+
+| Phase | Goal | Status |
+|-------|------|--------|
+| 6. Batch Glob Processing | Multi-file glob processing with error isolation | Not started |
+| 7. Vue 3 SFC Output | Vue single-file component generation | Not started |
+| 8. Autonomous Agent | Self-repairing agent with verification | Not started |
+
+### Overall: v1.1
+
+```
+[                    ] 0% — Planning
+```
+
+## Performance Metrics
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Requirements | 24 | BATCH-01..07, VUE-01..07, AGENT-01..10 |
+| Phases | 3 | Batch, Vue, Agent |
+| Phase length | TBD | Per-phase planning needed |
+
+## Accumulated Context
+
+### Decisions (v1.1)
+
+- Batch defaults to sequential processing (avoid API rate limits)
+- Bounded concurrency max of 4 (prevent resource exhaustion)
+- Agent max 3 repair attempts (prevent infinite loops)
+- Agent token budget: 50k tokens soft limit
+
+### Blockers
+
+- None currently
+
+### Notes
+
+- Research recommends: Batch → Vue → Agent (simplest to most complex)
+- Agent phase may need deeper research per research/SUMMARY.md
+- Config granularity: standard (5-8 phases typical)
+
+## Session Continuity
+
+- Read PROJECT.md, REQUIREMENTS.md, research/SUMMARY.md, config.json, MILESTONES.md
+- Created ROADMAP.md with 3 phases (6, 7, 8)
+- All 24 v1.1 requirements mapped with 100% coverage
+- Awaiting user approval to proceed to planning
+
+---
+
+*Last updated: 2026-05-23*
