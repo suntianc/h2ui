@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import { showBanner } from './output.js';
 import { convertCommand } from './commands/convert.js';
+import { batchCommand } from './commands/batch.js';
 import { initCommand } from './commands/init.js';
 import { previewCommand } from './commands/preview.js';
 import { loadConfig } from '../config/loader.js';
@@ -50,6 +51,29 @@ Examples:
     showBanner();
     const { config: configFile } = await loadConfig();
     await convertCommand(file, options, configFile);
+  });
+
+program
+  .command('batch')
+  .description('Convert multiple HTML files with glob patterns')
+  .argument('<pattern>', 'Glob pattern for HTML files (quote it!)')
+  .option('--out <directory>', 'output directory (default: ./h2ui_output/)')
+  .option('--concurrency <number>', 'parallel files (default: 1, max: 4)', parseInt, 1)
+  .option('--no-split', 'disable component splitting')
+  .option('--strict', 'promote all warnings to errors')
+  .option('--llm <mode>', 'LLM mode: on or off (default: on)')
+  .addHelpText('after', `
+Examples:
+  $ h2u batch "src/**/*.html"
+  $ h2u batch "pages/*.html" --out ./components --concurrency 4
+  $ h2u batch "*.html" --no-split
+`)
+  .action(async (pattern: string, options: { out?: string; concurrency?: number; split?: boolean; strict?: boolean; llm?: string }) => {
+    showBanner();
+    const { config: configFile } = await loadConfig();
+    const result = await batchCommand(pattern, options, configFile);
+    // Set exit code based on failures
+    process.exitCode = result.failures.length > 0 ? 1 : 0;
   });
 
 program
