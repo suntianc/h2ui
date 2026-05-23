@@ -3,8 +3,8 @@ import path from 'node:path';
 import fg from 'fast-glob';
 import pLimit from 'p-limit';
 import { convertCommand } from './convert.js';
-import type { ConvertOptions, PipelineContext, LLMConfig } from '../../types/pipeline.js';
-import type { H2uiConfig } from '../../types/config.js';
+import type { ConvertOptions, PipelineContext } from '../../types/pipeline.js';
+import type { H2uiConfig, LLMConfig } from '../../types/config.js';
 import { DEFAULT_OPTIONS, DEFAULT_LLM_CONFIG } from '../../config/defaults.js';
 
 // ============================================================================
