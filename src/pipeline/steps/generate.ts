@@ -57,13 +57,19 @@ function generateVueSFC(
   componentName: string,
   template: string,
   cssProperties: Record<string, string>,
-  childImports: string[] = []
+  childImports: string[] = [],
+  needsGlobalCss: boolean = false
 ): string {
   const blocks: string[] = [];
 
   // Build script setup block
   const scriptLines: string[] = [];
   scriptLines.push('<script setup lang="ts">');
+
+  // Add global CSS import if needed
+  if (needsGlobalCss) {
+    scriptLines.push(`import './global.css'`);
+  }
 
   // Add child component imports
   for (const child of childImports) {
@@ -96,6 +102,30 @@ function generateVueSFC(
 
 // Named export for Vue SFC generation
 export { generateVueSFC };
+
+/**
+ * Find child component names from the component tree for a given component.
+ */
+function findChildComponents(tree: ComponentNode, targetName: string): string[] {
+  if (tree.name === targetName) {
+    // Return direct child names of this component
+    return tree.children.map(c => c.name);
+  }
+  // Recursively search in children
+  for (const child of tree.children) {
+    const result = findChildComponents(child, targetName);
+    if (result.length > 0) return result;
+  }
+  return [];
+}
+
+/**
+ * Check if HTML has style tags (for global.css generation).
+ */
+function hasStyleTags(ctx: PipelineContext): boolean {
+  if (!ctx.$) return false;
+  return ctx.$('style').length > 0;
+}
 
 /**
  * Generate CSS Module content from a set of properties.
@@ -158,17 +188,23 @@ export const generateStep: PipelineStep = {
             const fileName = `${comp.name}.vue`;
             const filePath = path.join(outputDir, fileName);
 
-            // Collect child component imports
-            const childImports = ctx.components
-              .filter(c => c.name !== comp.name)
-              .map(c => c.name);
+            // Determine if this is the root component (first in list)
+            const isRoot = comp === ctx.components[0];
+            // Check if global.css is needed (only for root, when style tags exist)
+            const needsGlobalCss = isRoot && hasStyleTags(ctx);
+
+            // Collect actual child component imports from component tree
+            const childImports = ctx.componentTree
+              ? findChildComponents(ctx.componentTree, comp.name)
+              : [];
 
             // Generate Vue SFC with template, imports, and CSS
             const vueSFC = generateVueSFC(
               comp.name,
               comp.vueTemplate || comp.code,
               comp.cssProperties,
-              childImports
+              childImports,
+              needsGlobalCss
             );
 
             const formatted = await formatVueSFC(vueSFC);
@@ -212,6 +248,29 @@ export const generateStep: PipelineStep = {
                 writtenFiles.push(cssFilePath);
               }
             }
+          }
+        }
+
+        // Write global.css for Vue if style tags exist
+        if (isVue && hasStyleTags(ctx) && ctx.$) {
+          const $ = ctx.$;
+          let globalCss = '';
+          let globalIndex = 0;
+          $('style').each((i, el) => {
+            const cssContent = $(el).html() || '';
+            if (!cssContent.trim()) return;
+            if (globalIndex === 0) {
+              globalCss = cssContent.trim();
+            } else {
+              globalCss += '\n\n' + cssContent.trim();
+            }
+            globalIndex++;
+          });
+          if (globalCss) {
+            const globalPath = path.join(outputDir, 'global.css');
+            await writeFile(globalPath, globalCss);
+            writtenFiles.push(globalPath);
+            newCtx.warnings.push('Extracted <style> tags to global.css');
           }
         }
 
@@ -260,14 +319,39 @@ export const generateStep: PipelineStep = {
 
       if (isVue) {
         // Vue SFC mode - generate SFC with template and CSS
+        const needsGlobalCss = hasStyleTags(ctx);
         const vueSFC = generateVueSFC(
           ctx.vueTemplate ? 'Component' : 'App',
           ctx.vueTemplate || ctx.code,
           {}, // No CSS properties in single-component mode
-          []
+          [],
+          needsGlobalCss
         );
         const formatted = await formatVueSFC(vueSFC);
         const absolutePath = await writeFile(outputPath, formatted);
+
+        // Write global.css for Vue if style tags exist
+        if (needsGlobalCss && ctx.$) {
+          const $ = ctx.$;
+          let globalCss = '';
+          let globalIndex = 0;
+          $('style').each((i, el) => {
+            const cssContent = $(el).html() || '';
+            if (!cssContent.trim()) return;
+            if (globalIndex === 0) {
+              globalCss = cssContent.trim();
+            } else {
+              globalCss += '\n\n' + cssContent.trim();
+            }
+            globalIndex++;
+          });
+          if (globalCss) {
+            const globalPath = path.join(ctx.options.out, 'global.css');
+            await writeFile(globalPath, globalCss);
+            newCtx.warnings.push('Extracted <style> tags to global.css');
+          }
+        }
+
         return { ...newCtx, outputPath: absolutePath };
       } else {
         // React mode
