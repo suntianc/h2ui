@@ -33,8 +33,10 @@
     "cosmiconfig": "^9.0.1",
     "css-tree": "^3.2.1",
     "dotenv": "^17.4.2",
+    "fast-glob": "^3.3.3",
     "openai": "^6.38.0",
     "ora": "^9.4.0",
+    "p-limit": "^7.3.0",
     "prettier": "^3.8.3",
     "tiktoken": "^1.0.22",
     "zod": "^3.25.76"
