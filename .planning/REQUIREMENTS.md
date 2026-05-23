@@ -130,13 +130,13 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BATCH-01 | Phase 6 | Pending |
-| BATCH-02 | Phase 6 | Pending |
-| BATCH-03 | Phase 6 | Pending |
-| BATCH-04 | Phase 6 | Pending |
-| BATCH-05 | Phase 6 | Pending |
-| BATCH-06 | Phase 6 | Pending |
-| BATCH-07 | Phase 6 | Pending |
+| BATCH-01 | Phase 6 | Complete |
+| BATCH-02 | Phase 6 | Complete |
+| BATCH-03 | Phase 6 | Complete |
+| BATCH-04 | Phase 6 | Complete |
+| BATCH-05 | Phase 6 | Complete |
+| BATCH-06 | Phase 6 | Complete |
+| BATCH-07 | Phase 6 | Complete |
 | VUE-01 | Phase 7 | Pending |
 | VUE-02 | Phase 7 | Pending |
 | VUE-03 | Phase 7 | Pending |
@@ -166,13 +166,13 @@
 
 ### Batch Conversion
 
-- [ ] **BATCH-01**: User can run `h2u "src/**/*.html"` with a glob pattern to process multiple files
-- [ ] **BATCH-02**: Files are processed sequentially by default to avoid API rate limits
-- [ ] **BATCH-03**: User can specify `--concurrency N` to process N files in parallel (bounded, max 4)
-- [ ] **BATCH-04**: Individual file failures are isolated — batch continues, failures reported at end
-- [ ] **BATCH-05**: Failed files are tracked with error messages and retry instructions
-- [ ] **BATCH-06**: Exit code is non-zero if any file failed
-- [ ] **BATCH-07**: Output directory structure mirrors source directory layout (`src/a/page.html` → `output/src/a/page/`)
+- [x] **BATCH-01**: User can run `h2u "src/**/*.html"` with a glob pattern to process multiple files
+- [x] **BATCH-02**: Files are processed sequentially by default to avoid API rate limits
+- [x] **BATCH-03**: User can specify `--concurrency N` to process N files in parallel (bounded, max 4)
+- [x] **BATCH-04**: Individual file failures are isolated — batch continues, failures reported at end
+- [x] **BATCH-05**: Failed files are tracked with error messages and retry instructions
+- [x] **BATCH-06**: Exit code is non-zero if any file failed
+- [x] **BATCH-07**: Output directory structure mirrors source directory layout (`src/a/page.html` → `output/src/a/page/`)
 
 ### Vue 3 + TypeScript Output
 

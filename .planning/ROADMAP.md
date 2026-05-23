@@ -29,7 +29,7 @@ v1.1 delivers three major feature areas:
 
 ## Phases
 
-- [ ] **Phase 6: Batch Glob Processing** — Process multiple HTML files with glob patterns and error isolation
+- [x] **Phase 6: Batch Glob Processing** — Process multiple HTML files with glob patterns and error isolation (completed 2026-05-23)
 - [ ] **Phase 7: Vue 3 SFC Output** — Generate `.vue` single-file components with template/script/style blocks
 - [ ] **Phase 8: Autonomous Agent** — Self-repairing agent with tool calling and verification loops
 
@@ -51,7 +51,10 @@ v1.1 delivers three major feature areas:
 5. Exit code is non-zero when any file fails, allowing CI/CD integration
 6. Output directory structure mirrors source layout (`src/a/page.html` → `output/src/a/page/`)
 
-**Plans:** TBD
+**Plans:** 1/1 plans complete
+
+Plans:
+- [ ] 06-PLAN.md — Wave 1-3: Batch command with glob, concurrency, error isolation, mirroring
 
 ---
 
@@ -103,7 +106,7 @@ v1.1 delivers three major feature areas:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 6. Batch Glob Processing | 0/7 | Not started | - |
+| 6. Batch Glob Processing | 1/1 | Complete    | 2026-05-23 |
 | 7. Vue 3 SFC Output | 0/7 | Not started | - |
 | 8. Autonomous Agent | 0/10 | Not started | - |
 
