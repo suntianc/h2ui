@@ -78,10 +78,11 @@ export async function batchCommand(
               suggestion: 'Check the file for HTML parsing errors',
             });
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : String(err);
           failures.push({
             file,
-            error: err.message,
+            error: message,
             suggestion: 'Check the file format and try again',
           });
         }
@@ -137,6 +138,9 @@ async function runPipelineForBatch(
   const inputPath = path.resolve(file);
   const outputDir = path.resolve(mergedConfig.out);
 
+  // Read HTML content for pipeline
+  const html = await fs.promises.readFile(inputPath, 'utf-8');
+
   // Compute output path for mirroring
   const outputPath = computeOutputPath(file, outputDir);
 
@@ -170,7 +174,7 @@ async function runPipelineForBatch(
 
   // Run pipeline directly (no process.exit)
   const ctx = await pipeline.run({
-    html: '',
+    html,
     filePath: inputPath,
     $: undefined,
     code: undefined,

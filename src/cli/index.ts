@@ -58,7 +58,10 @@ program
   .description('Convert multiple HTML files with glob patterns')
   .argument('<pattern>', 'Glob pattern for HTML files (quote it!)')
   .option('--out <directory>', 'output directory (default: ./h2ui_output/)')
-  .option('--concurrency <number>', 'parallel files (default: 1, max: 4)', parseInt, 1)
+  .option('--concurrency <number>', 'parallel files (default: 1, max: 4)', (value) => {
+    const num = parseInt(value, 10);
+    return isNaN(num) ? 1 : num;
+  }, 1)
   .option('--no-split', 'disable component splitting')
   .option('--strict', 'promote all warnings to errors')
   .option('--llm <mode>', 'LLM mode: on or off (default: on)')
