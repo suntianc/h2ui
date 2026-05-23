@@ -18,4 +18,5 @@ export interface H2uiConfig {
   split?: boolean;
   cssMode?: 'module' | 'scoped' | 'inline' | 'global';
   llm?: LLMConfig;
+  framework?: 'react' | 'vue3';
 }

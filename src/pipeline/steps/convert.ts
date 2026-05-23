@@ -8,6 +8,118 @@ import { toPascalCase } from '../../util/file.js';
 import { flattenTree } from '../../util/tree.js';
 import { isInheritable } from '../../engine/css/extract.js';
 
+// Vue attribute mapping sets
+const VUE_EVENT_ATTRS = new Set([
+  'onclick', 'oninput', 'onblur', 'onfocus', 'onchange', 'onsubmit',
+  'onkeydown', 'onkeyup', 'onmouseover', 'onmouseout', 'ondblclick',
+  'oncontextmenu', 'onmousedown', 'onmouseup', 'onload', 'onerror'
+]);
+
+const VUE_BOOLEAN_ATTRS = new Set(['disabled', 'checked', 'readonly', 'selected', 'multiple', 'autofocus']);
+
+/**
+ * Map HTML attributes to Vue template syntax.
+ * Returns array of Vue attribute strings.
+ */
+function mapVueAttributes(rawAttrs: Record<string, string>, warnings: string[]): string[] {
+  const attrStrings: string[] = [];
+
+  for (const [key, value] of Object.entries(rawAttrs)) {
+    if (key === 'style') {
+      // Vue accepts inline style strings as-is
+      if (value) {
+        attrStrings.push(`style="${value}"`);
+      }
+    } else if (VUE_EVENT_ATTRS.has(key)) {
+      // onclick -> @click, oninput -> @input, etc.
+      const vueEvent = '@' + key.slice(2);
+      attrStrings.push(`${vueEvent}="${value}"`);
+    } else if (VUE_BOOLEAN_ATTRS.has(key)) {
+      // disabled, checked, readonly -> :disabled, :checked, :readonly
+      attrStrings.push(`:${key}="${value}"`);
+    } else if (key === 'className') {
+      // Skip for Vue — use class directly
+    } else if (key === 'htmlFor') {
+      // Skip for Vue — use for directly
+    } else if (value === undefined || value === null) {
+      // Skip undefined/null values
+    } else {
+      attrStrings.push(`${key}="${value}"`);
+    }
+  }
+
+  return attrStrings;
+}
+
+/**
+ * Generate Vue template HTML string from a Cheerio AST root node.
+ * Recursively processes all child nodes with Vue attribute mapping.
+ */
+function renderVueTemplate(
+  $: CheerioAPI,
+  el: AnyNode,
+  warnings: string[],
+  inPre: boolean = false
+): string {
+  if (el.type === 'text') {
+    const text = (el as Text).data || '';
+    if (inPre) {
+      // In pre tags, escape template expressions but keep text as-is
+      return text;
+    }
+    return text;
+  }
+
+  if (el.type === 'comment') {
+    return '';
+  }
+
+  const tagEl = el as Element;
+  const tagName = tagEl.tagName.toLowerCase();
+
+  // Special handling for HTML entities and raw text elements
+  if (tagName === 'script' || tagName === 'style') {
+    return '';
+  }
+
+  // Process attributes with Vue mapping
+  const rawAttrs = $(el).attr() || {};
+  const attrStrings = mapVueAttributes(rawAttrs, warnings);
+
+  const attrStr = attrStrings.length > 0 ? ' ' + attrStrings.join(' ') : '';
+
+  // Check for void elements
+  const voidElements = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+  const isVoid = voidElements.has(tagName);
+
+  // Get children
+  const children = $(el).contents().toArray();
+  const hasNonEmptyChildren = children.some(child => {
+    if (child.type === 'text') {
+      return !!((child as Text).data?.trim());
+    }
+    return child.type !== 'comment';
+  });
+
+  // Generate opening tag
+  const opening = `<${tagName}${attrStr}>`;
+  const closing = `</${tagName}>`;
+
+  if (isVoid || !hasNonEmptyChildren) {
+    // Self-closing void elements in Vue templates need proper handling
+    // Use self-closing for void elements
+    return `<${tagName}${attrStr} />`;
+  }
+
+  // Generate children content
+  let childrenContent = '';
+  for (const child of children) {
+    childrenContent += renderVueTemplate($, child, warnings, inPre || tagName === 'pre');
+  }
+
+  return `${opening}${childrenContent}${closing}`;
+}
+
 /**
  * Generate JSX code string from a Cheerio AST root node.
  * Recursively processes all child nodes.
@@ -346,6 +458,9 @@ function extractCssProperties($: CheerioAPI, el: Element): Record<string, string
   return result;
 }
 
+// Named exports for Vue rendering
+export { renderVueTemplate, mapVueAttributes };
+
 export const convertStep: PipelineStep = {
   name: 'convert',
 
@@ -356,6 +471,8 @@ export const convertStep: PipelineStep = {
       newCtx.errors.push('Cannot convert: no parsed AST available');
       return newCtx;
     }
+
+    const isVue = ctx.options.framework === 'vue3';
 
     try {
       const componentName = toPascalCase(ctx.filePath);
@@ -373,43 +490,66 @@ export const convertStep: PipelineStep = {
 
           // Extract CSS properties from element subtree
           const cssProperties = extractCssProperties($, node.element);
-
           node.cssProperties = cssProperties;
 
-          const code = generateComponentCode(
-            $,
-            node,
-            ctx.options.typescript,
-            components,
-            newCtx.warnings
-          );
-
-          components.push({ name: node.name, code, cssProperties });
+          if (isVue) {
+            // Vue mode: generate template HTML using renderVueTemplate
+            const vueTemplate = renderVueTemplate($, node.element, newCtx.warnings);
+            components.push({ name: node.name, code: '', cssProperties, vueTemplate });
+          } else {
+            // React mode: generate TSX component code
+            const code = generateComponentCode(
+              $,
+              node,
+              ctx.options.typescript,
+              components,
+              newCtx.warnings
+            );
+            components.push({ name: node.name, code, cssProperties });
+          }
         }
 
         // Generate root component that imports children
         const rootCssProperties = extractCssProperties($, ctx.componentTree.element);
         ctx.componentTree.cssProperties = rootCssProperties;
 
-        const rootCode = generateRootComponent(
-          $,
-          ctx.componentTree,
-          components,
-          ctx.options.typescript,
-          newCtx.warnings
-        );
-
-        components.unshift({
-          name: ctx.componentTree.name,
-          code: rootCode,
-          cssProperties: rootCssProperties,
-        });
+        if (isVue) {
+          // Vue mode: generate root Vue template
+          const vueTemplate = renderVueTemplate($, ctx.componentTree.element, newCtx.warnings);
+          components.unshift({
+            name: ctx.componentTree.name,
+            code: '',
+            cssProperties: rootCssProperties,
+            vueTemplate,
+          });
+        } else {
+          // React mode: generate root TSX component
+          const rootCode = generateRootComponent(
+            $,
+            ctx.componentTree,
+            components,
+            ctx.options.typescript,
+            newCtx.warnings
+          );
+          components.unshift({
+            name: ctx.componentTree.name,
+            code: rootCode,
+            cssProperties: rootCssProperties,
+          });
+        }
 
         return { ...newCtx, components };
       } else {
         // ── Single-component mode (fallback) ──
-        const code = generateComponent(ctx.$, componentName, ctx.options.typescript, newCtx.warnings);
-        return { ...newCtx, code };
+        if (isVue) {
+          // Vue single-component mode
+          const vueTemplate = renderVueTemplate(ctx.$, ctx.$.root()[0], newCtx.warnings);
+          return { ...newCtx, code: vueTemplate, vueTemplate };
+        } else {
+          // React single-component mode
+          const code = generateComponent(ctx.$, componentName, ctx.options.typescript, newCtx.warnings);
+          return { ...newCtx, code };
+        }
       }
     } catch (err: any) {
       newCtx.errors.push(`Convert error: ${err.message}`);

@@ -34,20 +34,22 @@ Config File:
 
 program
   .command('convert')
-  .description('Convert an HTML file to React TSX/JSX')
+  .description('Convert an HTML file to React TSX/JSX or Vue 3 SFC')
   .argument('<file>', 'path to HTML file')
   .option('--out <directory>', 'output directory (default: ./h2ui_output/)')
   .option('--type <type>', 'output file type: tsx or jsx (default: tsx)', /^(tsx|jsx)$/, 'tsx')
   .option('--no-split', 'disable component splitting (single-file output)')
   .option('--strict', 'promote all warnings to errors')
   .option('--llm <mode>', 'LLM mode: on or off (default: on)', (value) => value !== 'off' ? 'on' : 'off', 'on')
+  .option('--framework <framework>', 'target framework: react or vue3 (default: react)', /^(react|vue3)$/, 'react')
   .addHelpText('after', `
 Examples:
   $ h2ui convert path/to/index.html
   $ h2ui convert dashboard.html --out ./components --type jsx --no-split
   $ h2ui convert page.html --llm off
+  $ h2ui convert page.html --framework vue3
 `)
-  .action(async (file: string, options: { out?: string; type?: string; strict?: boolean; split?: boolean; llm?: string }) => {
+  .action(async (file: string, options: { out?: string; type?: string; strict?: boolean; split?: boolean; llm?: string; framework?: 'react' | 'vue3' }) => {
     showBanner();
     const { config: configFile } = await loadConfig();
     await convertCommand(file, options, configFile);

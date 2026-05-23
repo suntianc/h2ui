@@ -9,6 +9,8 @@ export interface ConvertOptions {
   cssMode: 'module' | 'scoped' | 'inline' | 'global';
   /** LLM review configuration per D-10 */
   llm?: LLMConfig;
+  /** Framework target: 'react' (default) or 'vue3' */
+  framework?: 'react' | 'vue3';
 }
 
 export interface PipelineContext {
@@ -16,6 +18,8 @@ export interface PipelineContext {
   filePath: string;
   $?: CheerioAPI;
   code?: string;
+  /** Vue template HTML (when framework is 'vue3') */
+  vueTemplate?: string;
   outputPath?: string;
   warnings: string[];
   errors: string[];
@@ -66,8 +70,10 @@ export interface ComponentNode {
 /** Per-component code output */
 export interface ComponentOutput {
   name: string;           // Component name
-  code: string;           // Full TSX/JSX component code
+  code: string;           // Full TSX/JSX component code (React) or Vue template (Vue)
   cssProperties: Record<string, string>;  // CSS properties to write
+  /** Vue template HTML (when framework is 'vue3') */
+  vueTemplate?: string;
 }
 
 /** Generated CSS file */

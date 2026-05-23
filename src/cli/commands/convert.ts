@@ -15,6 +15,7 @@ export async function convertCommand(
     strict?: boolean;
     split?: boolean;
     llm?: string;
+    framework?: 'react' | 'vue3';
     llmConfig?: LLMConfig;  // For programmatic callers passing LLMConfig directly
   },
   configFile: Partial<H2uiConfig> = {},
@@ -44,6 +45,7 @@ export async function convertCommand(
     // Note: If --css-mode CLI flag is added in future, update to:
     // cssMode: options.cssMode ?? configFile.cssMode ?? DEFAULT_OPTIONS.cssMode
     cssMode: configFile.cssMode ?? DEFAULT_OPTIONS.cssMode,
+    framework: options.framework ?? configFile.framework ?? 'react',
   };
 
   // Merge LLM config: programmatic llmConfig > CLI --llm flag > config file > defaults
