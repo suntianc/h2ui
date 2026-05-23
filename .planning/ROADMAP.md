@@ -23,6 +23,7 @@ progress:
 ## Overview
 
 v1.1 delivers three major feature areas:
+
 1. **Batch Glob Processing** — Multi-file conversion with `h2u "src/**/*.html"`
 2. **Vue 3 + TypeScript Output** — `.vue` single-file component generation
 3. **Full Autonomous Agent** — Self-planning, tool-calling, verification and repair
@@ -44,6 +45,7 @@ v1.1 delivers three major feature areas:
 **Requirements:** BATCH-01, BATCH-02, BATCH-03, BATCH-04, BATCH-05, BATCH-06, BATCH-07
 
 **Success Criteria** (what must be TRUE):
+
 1. User can run `h2u "src/**/*.html"` and all matching files are processed
 2. Files are processed sequentially by default without overwhelming API rate limits
 3. User can specify `--concurrency 4` to process up to 4 files in parallel
@@ -54,6 +56,7 @@ v1.1 delivers three major feature areas:
 **Plans:** 1/1 plans complete
 
 Plans:
+
 - [ ] 06-PLAN.md — Wave 1-3: Batch command with glob, concurrency, error isolation, mirroring
 
 ---
@@ -67,6 +70,7 @@ Plans:
 **Requirements:** VUE-01, VUE-02, VUE-03, VUE-04, VUE-05, VUE-06, VUE-07
 
 **Success Criteria** (what must be TRUE):
+
 1. User can specify `--framework vue3` and get `.vue` files instead of `.tsx`
 2. Generated `.vue` files contain proper `<template>`, `<script setup lang="ts">`, and `<style scoped>` blocks
 3. HTML attributes are correctly converted to Vue template syntax (`@click` for events, `for` for labels)
@@ -74,9 +78,17 @@ Plans:
 5. Component splitting respects semantic boundaries (header, nav, section, footer, etc.)
 6. Child components are imported using Vue's `import` statement
 
-**Plans:** TBD
+**Plans:** 3/3 plans
 
-**UI hint:** yes
+Plans:
+**Wave 1**
+
+- [ ] 07-01-PLAN.md — Wave 0: Test infrastructure + prettier-plugin-vue install with human verify
+- [ ] 07-02-PLAN.md — Wave 1: Core Vue renderer — --framework vue3 flag, Vue attribute mapping, SFC generation
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 07-03-PLAN.md — Wave 2: CSS scoped + component splitting with Vue imports
 
 ---
 
@@ -89,6 +101,7 @@ Plans:
 **Requirements:** AGENT-01, AGENT-02, AGENT-03, AGENT-04, AGENT-05, AGENT-06, AGENT-07, AGENT-08, AGENT-09, AGENT-10
 
 **Success Criteria** (what must be TRUE):
+
 1. User can enable agent mode with `--agent` flag
 2. Agent declares its plan before executing conversion (`PLAN` phase output visible to user)
 3. Agent can use tools: `read_file`, `write_file`, `run_pipeline`, `run_llm`, `verify_output`
@@ -107,7 +120,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 6. Batch Glob Processing | 1/1 | Complete    | 2026-05-23 |
-| 7. Vue 3 SFC Output | 0/7 | Not started | - |
+| 7. Vue 3 SFC Output | 0/3 | Not started | - |
 | 8. Autonomous Agent | 0/10 | Not started | - |
 
 ## Traceability
@@ -142,6 +155,7 @@ All v1.1 requirements mapped to phases:
 | AGENT-10 | Phase 8 | Pending |
 
 **Coverage:**
+
 - v1.1 requirements: 24 total (7 + 7 + 10)
 - Mapped to phases: 24
 - Unmapped: 0 ✓
