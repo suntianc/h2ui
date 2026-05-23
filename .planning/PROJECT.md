@@ -27,11 +27,20 @@ Take any HTML page and produce production-ready React components with properly e
 - [x] Browser preview server with live reload
 - [x] LLM HTML fidelity validation
 
+## Current Milestone: v1.1
+
+**Goal:** Extend h2ui with batch processing, Vue 3 support, and autonomous agent repair
+
+**Target features:**
+- Batch conversion with glob pattern — `h2u "src/**/*.html"`
+- Vue 3 + TypeScript output — generate `.vue` single file components
+- Full autonomous Agent — self-planning, tool-calling, verification and fixing loop
+
 ## Active (Next Milestone)
 
-- [ ] Batch conversion of multiple HTML files
-- [ ] Watch mode — auto-convert on file change
-- [ ] npm package with npx and global install support
+- [ ] Batch conversion with glob pattern — `h2u "src/**/*.html"`
+- [ ] Vue 3 + TypeScript output — generate `.vue` single file components
+- [ ] Full autonomous Agent — self-planning, tool-calling, verification and fixing loop
 
 ## Out of Scope
 
@@ -40,12 +49,12 @@ Take any HTML page and produce production-ready React components with properly e
 | WYSIWYG / GUI | — | CLI-only tool |
 | Runtime DOM conversion | — | Build-time / offline conversion only |
 | Two-way sync (HTML ↔ React) | — | One-way conversion |
-| Multi-framework (Vue, Svelte) | v2+ | React-only for v1 |
+| Multi-framework (Svelte, Solid) | v2+ | Vue 3 added in v1.1 |
 | Tailwind CSS inference | v2+ | CSS Modules first |
 
 ## Context
 
-v1.0 shipped in 1 day (2026-05-21 → 2026-05-22) with 16 plans across 6 phases. Initial user feedback indicates demand for batch conversion and watch mode.
+v1.0 shipped in 1 day (2026-05-21 → 2026-05-22) with 16 plans across 6 phases. v1.1 planning started 2026-05-23.
 
 ## Key Decisions
 
@@ -78,4 +87,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-22 after v1.0 milestone*
+*Last updated: 2026-05-23 — v1.1 milestone started*
