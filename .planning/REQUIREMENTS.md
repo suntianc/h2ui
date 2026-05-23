@@ -125,5 +125,62 @@
 - Unmapped: 0 ✓
 
 ---
+
+## v1.1 Requirements
+
+### Batch Conversion
+
+- [ ] **BATCH-01**: User can run `h2u "src/**/*.html"` with a glob pattern to process multiple files
+- [ ] **BATCH-02**: Files are processed sequentially by default to avoid API rate limits
+- [ ] **BATCH-03**: User can specify `--concurrency N` to process N files in parallel (bounded, max 4)
+- [ ] **BATCH-04**: Individual file failures are isolated — batch continues, failures reported at end
+- [ ] **BATCH-05**: Failed files are tracked with error messages and retry instructions
+- [ ] **BATCH-06**: Exit code is non-zero if any file failed
+- [ ] **BATCH-07**: Output directory structure mirrors source directory layout (`src/a/page.html` → `output/src/a/page/`)
+
+### Vue 3 + TypeScript Output
+
+- [ ] **VUE-01**: User can specify `--framework vue3` to output `.vue` single-file components
+- [ ] **VUE-02**: Generated `.vue` files contain `<template>`, `<script setup lang="ts">`, and `<style scoped>` blocks
+- [ ] **VUE-03**: HTML attributes are converted to Vue template syntax (`class` → `class`, `onclick` → `@click`, `for` → `for`)
+- [ ] **VUE-04**: `style` attributes are extracted to `<style scoped>` blocks with CSS Modules naming
+- [ ] **VUE-05**: Vue 3 Composition API (`<script setup lang="ts">`) is used for component logic
+- [ ] **VUE-06**: Components are split using the same semantic boundary detection as React output
+- [ ] **VUE-07**: Child components are imported using Vue's `import` statement
+
+### Autonomous Agent
+
+- [ ] **AGENT-01**: Agent mode is enabled via `--agent` flag
+- [ ] **AGENT-02**: Agent plans its approach before executing conversion (`PLAN` phase)
+- [ ] **AGENT-03**: Agent can use tools: `read_file`, `write_file`, `run_pipeline`, `run_llm`, `verify_output`
+- [ ] **AGENT-04**: Agent executes the pipeline and verifies output fidelity against original HTML (`EXECUTE` → `VERIFY`)
+- [ ] **AGENT-05**: If verification fails, agent attempts repair with a different strategy (`REPAIR` phase)
+- [ ] **AGENT-06**: Maximum 3 repair attempts per file to prevent infinite loops
+- [ ] **AGENT-07**: Agent tracks action history to avoid repeating failed strategies
+- [ ] **AGENT-08**: Token budget is tracked; agent stops if budget exceeds limit (e.g., 50k tokens)
+- [ ] **AGENT-09**: Semantic validation ensures fixes address the actual problem, not just silence errors
+- [ ] **AGENT-10**: Agent reports confidence score for each repaired component
+
+## Future Requirements (v1.2+)
+
+### Batch & Watch
+
+- [ ] **FUT-01**: Watch mode — auto-convert on file change via `--watch` flag
+- [ ] **FUT-02**: Incremental batch — skip already-converted files via `--incremental` flag
+- [ ] **FUT-03**: Glob negation patterns — exclude files via `!"**/node_modules/**"`
+
+### Vue 3 Extensions
+
+- [ ] **FUT-04**: Vue Router integration hints in generated components
+- [ ] **FUT-05**: Pinia store extraction for stateful components
+
+### Agent Extensions
+
+- [ ] **FUT-06**: Persistent agent memory across multiple files in batch mode
+- [ ] **FUT-07**: Custom tool registration via config file
+- [ ] **FUT-08**: Agent self-evaluation metrics for repair quality
+
+---
+
 *Requirements defined: 2026-05-21*
-*Last updated: 2026-05-21 after initial definition*
+*Last updated: 2026-05-23 — v1.1 requirements added*
