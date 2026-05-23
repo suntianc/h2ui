@@ -1,107 +1,294 @@
-# Stack Research
+# Stack Additions for h2ui v1.1
 
-**Domain:** HTML-to-React Component Conversion CLI Tool
-**Researched:** 2026-05-21
+**Project:** h2ui-cli
+**Purpose:** Stack additions for batch conversion, Vue 3 SFC output, and autonomous agent repair
+**Researched:** 2026/05/23
 **Confidence:** HIGH
 
-## Recommended Stack
+---
 
-### Core Technologies
+## Summary
 
-| Technology | Version | Purpose | Why Recommended |
-| ---------- | ------- | ------- | --------------- |
-| Node.js | 22 LTS | Runtime | CLI tooling standard, npm ecosystem, async/await |
-| TypeScript | 5.x | Language | Type safety for AST manipulation and code generation |
-| Cheerio | 1.x | HTML AST Parsing | 27.6k GitHub stars, jQuery-like API, fast, CSS selectors built-in |
-| commander | 12.x | CLI framework | Standard for Node.js CLI tools, simple API, help generation |
-| Prettier | 3.x | Code formatting | Industry standard JS/TSX formatter, essential for generated code |
+Three new features require these stack additions:
 
-### Supporting Libraries
+| Feature | Required Addition | Version | Status |
+|---------|------------------|---------|--------|
+| Batch glob | `fast-glob` | ^3.3.3 | NEW |
+| Vue 3 SFC output | `@vue/compiler-sfc` | ^3.5.34 | NEW |
+| Autonomous agent | Upgrade `@anthropic-ai/sdk` | ^0.98.0 | UPGRADE |
 
-| Library | Version | Purpose | When to Use |
-| ------- | ------- | -------- | ----------- |
-| jsdom | 25.x | Full DOM environment | For CSS computed style extraction (when style context matters) |
-| css-tree | 2.x | CSS AST parsing/manipulation | For extracting and transforming CSS from `<style>` tags |
-| postcss | 8.x | CSS transformation | For optimizing/minifying extracted CSS |
-| chalk | 5.x | Terminal colors | CLI output styling |
-| ora | 8.x | Terminal spinners | Progress indicators during conversion |
-| openai | 4.x | LLM integration | Configurable provider for AI-powered component naming |
-| inquirer | 10.x | Interactive prompts | For config setup, user prompts in CLI |
+**All other dependencies already exist in project.**
 
-### Development Tools
+---
 
-| Tool | Purpose | Notes |
-| ---- | ------- | ----- |
-| vitest | Testing | Fast, Vite-native, good for snapshot testing generated code |
-| tsx | Dev runner | TypeScript execution without build step |
-| pnpm | Package manager | Fast, disk-efficient |
-| changesets | Versioning | Standard for npm publish workflow |
+## 1. Batch Glob Processing
 
-## Installation
+**For:** `h2u "src/**/*.html"` pattern-based batch conversion
 
+| Library | Version | Purpose | Rationale |
+|---------|---------|---------|-----------|
+| **fast-glob** | ^3.3.3 | Pattern-based file discovery | 3-10x faster than `glob` npm package; Node.js 22 compatible |
+
+**Installation:**
 ```bash
-# Core
-npm install cheerio commander prettier css-tree
-
-# Supporting
-npm install chalk ora
-
-# LLM integration (optional - user configures which provider)
-npm install openai @anthropic-ai/sdk
-
-# Dev dependencies
-npm install -D vitest tsx typescript
+npm install fast-glob
 ```
 
-## Alternatives Considered
+**Usage:**
+```typescript
+import fg from 'fast-glob';
 
-| Recommended | Alternative | When to Use Alternative |
-| ----------- | ----------- | ----------------------- |
-| Cheerio | parse5 | When you need lower-level DOM spec compliance (Cheerio is simpler) |
-| Cheerio | jsdom | Only if you need full browser API (jsdom is heavy for CLI) |
-| commander | yargs | When you need complex nested subcommands (commander is simpler) |
-| Prettier | dprint | When speed matters more (dprint 10x faster, but less flexible) |
-| css-tree | postcss-selector-parser | Only if you only need selector parsing (css-tree does full CSS) |
+const files = await fg.glob(['**/*.html', '!**/node_modules/**'], {
+  cwd: process.cwd(),
+  absolute: true,
+});
 
-## What NOT to Use
+for (const file of files) {
+  await convertFile(file);
+}
+```
 
-| Avoid | Why | Use Instead |
-| ----- | --- | ----------- |
-| Babel AST for HTML | Babel is for JS/TS, not HTML. Overly complex for HTML parsing | Cheerio for HTML |
-| htmlparser2 | Lower-level, no jQuery-like API | Cheerio |
-| regex-based HTML parsing | HTML is not a regular language, regex breaks on edge cases | Cheerio / proper parser |
-| `dangerouslySetInnerHTML` | All generated code should avoid this anti-pattern | Proper JSX conversion |
+**Why NOT alternatives:**
+- `glob` npm package: Slower, less maintained, same pattern syntax
+- `globby` (^16.2.0): Wrapper around fast-glob with CLI-friendly API; adds unnecessary layer
+- Node.js built-in: No native glob support in Node 22
 
-## Stack Patterns by Variant
+**Integration:** CLI commander argument parsing (existing: ^12.1.0)
 
-**If performance-critical (large HTML files):**
-- Use Cheerio with `parse5` backend for raw speed
-- Skip Prettier formatting, output raw but correct code
-- Use streaming input rather than reading entire file
+---
 
-**If LLM-heavy (AI-first conversion):**
-- Use jsdom to provide complete DOM context to LLM
-- Include `@langchain/core` for provider-agnostic LLM calls
-- Consider structured output (JSON mode) for deterministic component extraction
+## 2. Vue 3 Single-File Component Output
+
+**For:** Generating `.vue` Single-File Components with `<template>`, `<script setup>`, `<style>`
+
+| Library | Version | Purpose | Rationale |
+|---------|---------|---------|-----------|
+| **@vue/compiler-sfc** | ^3.5.34 | Programmatic SFC compilation | Official Vue 3 SFC compiler; version must match Vue |
+| **vue** | ^3.5.34 | Peer dependency | Required by compiler-sfc |
+| **@vitejs/plugin-vue** | ^6.0.7 | Vite preview integration | Only if Vue SFC preview server needed |
+
+**Installation:**
+```bash
+npm install vue@^3.5.34 @vue/compiler-sfc@^3.5.34
+npm install -D @vitejs/plugin-vue@^6.0.7
+```
+
+**@vue/compiler-sfc API for .vue generation:**
+
+```typescript
+import { parse, compileScript, compileTemplate, compileStyle } from '@vue/compiler-sfc';
+
+// 1. Parse HTML source into SFC descriptor
+const descriptor = parse(htmlSource, { filename: 'Component.vue' });
+
+// 2. Compile script block with TypeScript
+const script = compileScript(descriptor.descriptor, {
+  id: 'unique-id',
+  lang: 'ts',
+});
+
+// 3. Compile template
+const template = compileTemplate({
+  id: 'unique-id',
+  filename: 'Component.vue',
+  source: descriptor.descriptor.template.content,
+});
+
+// 4. Compile scoped styles
+const styles = descriptor.descriptor.styles.map((style, i) =>
+  compileStyle({
+    id: `scoped-${i}`,
+    filename: 'Component.vue',
+    source: style.content,
+    scoped: style.attrs.scoped !== undefined,
+  })
+);
+
+// 5. Assemble SFC string
+const vueSFC = `<template>
+${descriptor.descriptor.template.content}
+</template>
+
+<script setup lang="ts">
+${script.content}
+</script>
+
+<style${styles[0]?.scoped ? ' scoped' : ''}>
+${styles[0]?.code}
+</style>
+`;
+```
+
+**Key compiler-sfc exports:**
+- `parse()` - Parse .html/.vue source into descriptor with template/script/style blocks
+- `compileScript()` - Process `<script setup>`, TypeScript support, CSS variable injection
+- `compileTemplate()` - Compile template to render function
+- `compileStyle()` - Process scoped CSS, CSS Modules
+
+**Integration points:**
+- Cheerio (existing: ^1.2.0) - Extract template/script/style from HTML
+- css-tree (existing: ^3.2.1) - CSS Modules extraction (already in use)
+- Output: Write `.vue` files alongside `.tsx`
+
+---
+
+## 3. Autonomous Agent Repair
+
+**For:** Self-planning, tool-calling, verification loops to fix conversion errors autonomously
+
+| Library | Version | Purpose | Rationale |
+|---------|---------|---------|-----------|
+| **@anthropic-ai/sdk** | ^0.98.0 | Tool use, verification loops | Already in project at ^0.97.1; upgrade for latest patterns |
+
+**Upgrade:**
+```bash
+npm install @anthropic-ai/sdk@^0.98.0
+```
+
+**Already available (no changes needed):**
+- Zod ^3.25.76 (existing; peer dependency requirement met)
+- Tool definitions via SDK
+- Message loop handling
+
+**Autonomous agent pattern:**
+
+```typescript
+import Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
+
+const client = new Anthropic();
+
+// Tool definitions
+const tools = [
+  {
+    name: 'convert_file',
+    description: 'Convert HTML file to React/Vue component',
+    input_schema: z.object({
+      file_path: z.string(),
+      output_format: z.enum(['tsx', 'vue']),
+    }),
+  },
+  {
+    name: 'verify_output',
+    description: 'Verify converted component compiles',
+    input_schema: z.object({
+      file_path: z.string(),
+    }),
+  },
+  {
+    name: 'fix_errors',
+    description: 'Fix conversion errors using LLM',
+    input_schema: z.object({
+      file_path: z.string(),
+      errors: z.array(z.string()),
+    }),
+  },
+];
+
+// Agent loop with verification
+async function autonomousRepair(htmlFile: string) {
+  let messages = [{
+    role: 'user',
+    content: `Repair conversion for ${htmlFile}. Convert, verify, fix errors.`
+  }];
+
+  for (let i = 0; i < 5; i++) {  // max iterations
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      tools,
+      messages,
+    });
+
+    for (const block of response.content) {
+      if (block.type === 'tool_use') {
+        const result = await executeTool(block.name, block.input);
+        messages.push({
+          role: 'user',
+          content: [{
+            type: 'tool_result',
+            tool_use_id: block.id,
+            content: JSON.stringify(result),
+          }],
+        });
+      }
+    }
+
+    if (response.stop_reason === 'end_turn') {
+      return 'Complete';
+    }
+  }
+  return 'Max iterations reached';
+}
+```
+
+**Verification loop pattern:**
+```typescript
+async function verifyAndFix(file: string): Promise<boolean> {
+  const errors = await verify(file);
+  if (errors.length === 0) return true;
+
+  const fixed = await llm.fixErrors(file, errors);
+  const newErrors = await verify(fixed);
+  return newErrors.length === 0;
+}
+```
+
+**Integration points:**
+- Existing LLM provider abstraction (OpenAI/Anthropic/Ollama)
+- Existing Zod schemas (^3.25.76)
+- Existing cosmiconfig (^9.0.1)
+
+---
+
+## What NOT to Add
+
+| Library | Why Avoid |
+|---------|-----------|
+| `glob` (npm) | Slower than fast-glob; deprecated patterns |
+| `globby` | Wrapper layer; fast-glob is sufficient |
+| `@vue/runtime-core` alone | Runtime only; need compiler-sfc for SFC generation |
+| `vite-plugin-vue-next` | Package does not exist |
+| Additional LLM SDKs | Already supporting OpenAI/Anthropic/Ollama |
+
+---
 
 ## Version Compatibility
 
-| Package | Compatible With | Notes |
-| ------- | --------------- | ----- |
-| cheerio@1.x | Node.js 18+ | Stable API |
-| commander@12.x | Node.js 18+ | ESM/CJS dual support |
-| prettier@3.x | Node.js 18+ | Async API required |
-| css-tree@2.x | Node.js 18+ | ESM-only |
+| New Package | Current Vue | Current Anthropic | Current Node |
+|-------------|-------------|-------------------|--------------|
+| fast-glob ^3.3.3 | N/A | N/A | v22.21.0 |
+| @vue/compiler-sfc ^3.5.34 | 3.5.34 | N/A | N/A |
+| @anthropic-ai/sdk ^0.98.0 | N/A | ^0.97.1 | N/A |
+
+---
+
+## Existing Dependencies (Unchanged)
+
+These packages already exist and are sufficient:
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| cheerio | ^1.2.0 | HTML parsing |
+| css-tree | ^3.2.1 | CSS AST |
+| commander | ^12.1.0 | CLI framework |
+| cosmiconfig | ^9.0.1 | Config loading |
+| zod | ^3.25.76 | Validation |
+| openai | ^6.38.0 | LLM provider |
+| ora | ^9.4.0 | Spinners |
+| prettier | ^3.8.3 | Code formatting |
+| vite | ^5.x | Preview server |
+
+---
 
 ## Sources
 
-- [Cheerio (27.6k stars)](https://github.com/cheeriojs/cheerio) - jQuery-like HTML parser
-- [html-to-react-components (2.2k stars)](https://github.com/roman01la/html-to-react-components) - Existing HTML-to-React CLI with `data-component` approach
-- [react-from-html](https://github.com/measuredco/react-from-html) - Runtime HTML-to-React hydration
-- [Magic Patterns - Converting websites to React](https://www.magicpatterns.com/blog/any-website-to-react-component) - CSS extraction techniques with `getComputedStyle`
-- [Anima - LLM-enhanced code generation](https://www.animaapp.com/blog/product-updates/enhancing-reactjs-code-generation-with-llms/) - Hybrid rule-based + LLM approach
-- Commander.js docs - CLI framework standards
+- npm registry (verified via `npm view`)
+- Vue.js core: https://github.com/vuejs/core (compiler-sfc README)
+- fast-glob: https://github.com/mrmlnc/fast-glob
+- Anthropic SDK: https://www.npmjs.com/package/@anthropic-ai/sdk
 
 ---
-*Stack research for: h2ui (HTML-to-React CLI)*
-*Researched: 2026-05-21*
+
+*Stack additions for h2ui v1.1 features*
+*Researched: 2026/05/23*

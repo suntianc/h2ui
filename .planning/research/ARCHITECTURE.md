@@ -1,305 +1,449 @@
-# Architecture Research
+# Architecture Research: h2ui v1.1 Feature Integration
 
-**Domain:** HTML-to-React Component Conversion CLI Tool
-**Researched:** 2026-05-21
-**Confidence:** HIGH
+**Project:** h2ui
+**Researched:** 2026-05-23
+**Domain:** CLI HTML-to-component converter
+**Confidence:** MEDIUM (based on existing codebase analysis + Vue 3 SFC docs)
 
-## Standard Architecture
+## Executive Summary
 
-### System Overview
+This document analyzes integration points for three v1.1 features: batch glob processing, Vue 3 SFC output, and autonomous agent repair. The existing Pipeline architecture (Step pattern) supports extension via step insertion and replacement. Key integration points are: (1) CLI layer for batch file enumeration, (2) generate step for output format switching, (3) new AgentOrchestrator wrapping Pipeline with tool-calling and verification loops.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        CLI Layer                              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │ commander │  │  chalk   │  │   ora    │  │  config  │    │
-│  └─────┬────┘  └──────────┘  └──────────┘  └──────────┘    │
-│        │                                                     │
-├────────┴───────────────────────────────────────────────────┤
-│                  Pipeline Layer                               │
-│  ┌──────────────────────────────────────────────────┐       │
-│  │              Conversion Pipeline                    │      │
-│  │  INPUT → Parse → Split → Transform → Generate      │      │
-│  └──────────────────────────────────────────────────┘       │
-│        │                                                     │
-├────────┴───────────────────────────────────────────────────┤
-│                  Engine Layer                                 │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│  │  Parser  │  │  Splitter│  │Transform │  │Generator │    │
-│  │  Engine  │  │  Engine  │  │Engine    │  │Engine    │    │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
-│  ┌──────────┐  ┌──────────┐                                  │
-│  │   CSS    │  │  LLM     │                                  │
-│  │  Engine  │  │ Provider │                                  │
-│  └──────────┘  └──────────┘                                  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Component Responsibilities
-
-| Component | Responsibility | Typical Implementation |
-| --------- | -------------- | ---------------------- |
-| CLI Layer | Parse args, show output, orchestrate | commander + chalk |
-| Pipeline | Orchestrate conversion steps | Sequential pipeline with error handling |
-| Parser Engine | Parse HTML to AST | Cheerio |
-| Splitter Engine | Detect component boundaries, build component tree | Custom semantic analysis on Cheerio AST |
-| Transform Engine | Convert HTML attributes to JSX, extract styles | Rule-based attribute mapping |
-| CSS Engine | Extract/transform CSS to CSS Modules | css-tree |
-| LLM Provider | Interface for optional LLM enhancement | OpenRouter/OpenAI SDK |
-| Generator Engine | Output component files (TSX/JSX + CSS) | Template-based code generation |
-
-## Recommended Project Structure
+## Current Architecture Overview
 
 ```
-h2ui/
-├── src/
-│   ├── cli/              # CLI interfaces
-│   │   ├── index.ts       # Commander setup, arg parsing
-│   │   ├── commands/      # CLI commands
-│   │   │   ├── convert.ts  # `h2ui <file>` command
-│   │   │   └── init.ts     # `h2ui init` config generator
-│   │   └── output.ts      # Terminal output formatting
-│   ├── pipeline/          # Conversion orchestration
-│   │   ├── index.ts       # Pipeline runner
-│   │   ├── pipeline.ts    # Pipeline step definitions
-│   │   └── steps/         # Individual pipeline steps
-│   │       ├── parse.ts
-│   │       ├── split.ts
-│   │       ├── transform.ts
-│   │       ├── css.ts
-│   │       ├── llm.ts
-│   │       └── generate.ts
-│   ├── engine/            # Core conversion engines
-│   │   ├── parser/        # HTML parsing
-│   │   │   ├── index.ts   # Cheerio wrapper
-│   │   │   └── types.ts
-│   │   ├── splitter/      # Component boundary detection
-│   │   │   ├── index.ts
-│   │   │   ├── semantic.ts   # Semantic tag detection
-│   │   │   └── nesting.ts    # Nesting depth analysis
-│   │   ├── transform/     # HTML→JSX transformation
-│   │   │   ├── index.ts
-│   │   │   ├── attributes.ts # class→className, etc.
-│   │   │   ├── style.ts      # style attr → React style object
-│   │   │   └── children.ts   # children handling
-│   │   ├── css/           # CSS processing
-│   │   │   ├── index.ts
-│   │   │   ├── extract.ts    # Extract inline styles
-│   │   │   ├── module.ts     # Generate CSS Modules
-│   │   │   └── optimize.ts   # CSS optimization
-│   │   ├── llm/           # LLM integration
-│   │   │   ├── index.ts
-│   │   │   ├── provider.ts   # Provider abstraction
-│   │   │   ├── prompts.ts    # LLM prompts
-│   │   │   └── naming.ts     # Component naming
-│   │   └── generator/     # Code generation
-│   │       ├── index.ts
-│   │       ├── tsx.ts        # TSX generation
-│   │       ├── jsx.ts        # JSX generation
-│   │       ├── css-module.ts # CSS Module generation
-│   │       └── template.ts   # Component templates
-│   ├── config/            # Configuration
-│   │   ├── index.ts
-│   │   ├── schema.ts      # Config validation
-│   │   └── defaults.ts    # Default settings
-│   ├── types/             # TypeScript types
-│   │   ├── component.ts   # Component tree types
-│   │   ├── config.ts      # Config types
-│   │   └── pipeline.ts    # Pipeline types
-│   └── util/              # Utilities
-│       ├── file.ts        # File I/O
-│       ├── path.ts        # Path resolution
-│       └── logger.ts      # Logging
-├── test/
-│   ├── fixtures/          # Test HTML files
-│   ├── engine/
-│   └── pipeline/
-├── bin/
-│   └── h2ui               # Package entry point
-└── package.json
+CLI Layer (convert.ts)
+  └── Pipeline (pipeline/index.ts)
+        └── Steps: parseStep → [splitStep] → convertStep → [cssStep] → [llmFidelityStep] → generateStep
+
+PipelineContext carries state: html, $, componentTree, components[], cssFiles[], llmResult
 ```
 
-### Structure Rationale
+**Key components:**
+- `Pipeline` — orchestrates steps, manages context
+- `PipelineStep` — interface with `run(ctx): Promise<ctx>`
+- `PipelineContext` — shared state across steps
+- `convertStep` — generates TSX/JSX from component tree
+- `generateStep` — writes files (components, CSS modules)
 
-- **`cli/`:** Separates CLI concerns from core logic — easy to add new commands
-- **`pipeline/`:** Explicit step-based pipeline makes the conversion flow clear and debuggable
-- **`engine/`:** Each engine is independently testable; engines follow single responsibility
-- **`config/`:** Centralized config handling for both CLI flags and config file
-- **`test/fixtures/`:** Real HTML files for integration testing
+---
 
-## Architectural Patterns
+## Feature 1: Batch Glob Processing
 
-### Pattern 1: Pipeline Architecture
+### Integration Points
 
-**What:** Sequential steps where each step receives the previous step's output, transforms it, and passes it forward. Steps can be conditionally included/excluded.
+| Layer | Component | Change Type | Description |
+|-------|-----------|-------------|-------------|
+| CLI | `convert.ts` | Modify | Replace single-file check with glob expansion |
+| Pipeline | `Pipeline` | Extend | Support batch context or per-file pipeline runs |
+| Config | `ConvertOptions` | Extend | Add `files: string[]` or process in batch mode |
+| New | `FileQueue` | New | Manages file enumeration, deduplication, progress |
+| New | `WorkerPool` | New | Optional parallel execution for large batches |
 
-**When to use:** Multi-stage conversion pipelines with clear input/output at each stage.
+### Data Flow: Batch Mode
 
-**Trade-offs:**
-- Pro: Clear data flow, easy to add/remove/reorder steps
-- Pro: Each step is independently testable
-- Con: Can't easily skip ahead (sequential by nature)
-- Con: Intermediate state must be passed through
+```
+User: h2u "src/**/*.html"
 
-**Example:**
-```typescript
-interface PipelineContext {
-  html: string;
-  ast: Cheerio;
-  components: ComponentNode[];
-  cssFiles: CSSFile[];
-  outputFiles: OutputFile[];
+CLI Layer:
+  FileQueue.expand("src/**/*.html") → string[]
+  FileQueue.validate(paths) → validPaths[]
+
+  For each file in validPaths:
+    Pipeline.run({ html, filePath, ...options })
+
+  FileQueue.collect(results[]) → BatchResult[]
+  FileQueue.report(summary)
+```
+
+### Alternative: Batch Context (Pipeline-level)
+
+```
+BatchPipelineContext extends PipelineContext {
+  files: string[];
+  currentIndex: number;
+  batchResults: BatchResult[];
 }
 
-const pipeline = [
-  parseStep,
-  splitStep,
-  transformStep,
-  cssStep,
-  llmStep,  // optional
-  generateStep,
-];
-
-const result = await runPipeline(pipeline, { html: input });
-```
-
-### Pattern 2: Visitor Pattern for AST Transformation
-
-**What:** Walk the parsed AST and apply transformation rules to each node.
-
-**When to use:** When you need to apply consistent transformations across all nodes (e.g., converting HTML attributes to JSX).
-
-**Trade-offs:**
-- Pro: Each transformation is isolated and composable
-- Pro: Easy to add new attribute conversions
-- Con: Single large visitor can be hard to read
-
-**Example:**
-```typescript
-const visitors = [
-  convertClassName,
-  convertStyleAttribute,
-  convertHtmlAttributes,
-  convertEvents,
-  convertChildren,
-];
-
-function transformNode(node: CheerioElement): JSXNode {
-  const jsxNode = { ...node };
-  visitors.forEach(visitor => visitor(jsxNode));
-  return jsxNode;
+BatchPipeline.run(ctx) {
+  for (const file of ctx.files) {
+    ctx.currentIndex = i;
+    ctx = Pipeline.run({ ...ctx, filePath: file });
+    ctx.batchResults.push({ file, outputPath, errors, warnings });
+  }
+  return ctx;
 }
 ```
 
-### Pattern 3: Provider Abstraction for LLM
+### Recommended Approach
 
-**What:** Abstract LLM provider behind a common interface so users can bring any provider.
+**Option A (Simpler): CLI-level batching** — Run Pipeline multiple times from CLI
+- Pros: Minimal pipeline changes, reuse existing step logic
+- Cons: No shared state between files, no atomic batch operations
 
-**When to use:** When the tool should work with multiple LLM backends.
+**Option B (Cleaner): BatchPipeline wrapper** — New class wrapping Pipeline
+- Pros: Batch context for cross-file optimizations, cleaner CLI
+- Cons: More code, potential complexity
 
-**Trade-offs:**
-- Pro: Future-proof, users not locked to one provider
-- Pro: Easy to add new providers
-- Con: Need to abstract different API shapes
-- Con: Some features may not work with all providers
+**Recommendation:** Option A initially. Modify `convert.ts` to expand glob and loop, accumulate results. This avoids pipeline complexity and defers WorkerPool to v1.2 if needed.
 
-**Example:**
-```typescript
-interface LLMProvider {
-  name: string;
-  complete(prompt: string, options?: LLMOptions): Promise<string>;
+### New Components
+
+| Component | Purpose | Placement |
+|-----------|---------|-----------|
+| `FileQueue` | Glob expansion, validation, path resolution | `src/cli/batch/` |
+| `BatchResult` | Type for aggregated results | `src/types/batch.ts` |
+
+### Build Order
+
+1. `src/types/batch.ts` — Define BatchResult type
+2. `src/cli/batch/FileQueue.ts` — Glob expansion + validation
+3. `convert.ts` modification — Batch mode detection and loop
+4. `output.ts` modification — Batch result reporting
+
+---
+
+## Feature 2: Vue 3 SFC Output
+
+### Integration Points
+
+| Layer | Component | Change Type | Description |
+|-------|-----------|-------------|-------------|
+| Config | `ConvertOptions` | Extend | Add `framework: 'react' \| 'vue'` |
+| Types | `ComponentOutput` | Modify | Add optional `vueSFC?: VueSFCOutput` |
+| Convert | `convert.ts` | Extend | Generate Vue SFC alongside/between TSX |
+| Generate | `generate.ts` | Extend | Write `.vue` files instead of/in addition to `.tsx` |
+| New | `VueSFCGenerator` | New | Vue SFC template compilation |
+| New | `TemplateCompiler` | New | JSX → Vue template transformation |
+
+### Vue 3 SFC Structure (from Vue docs)
+
+```vue
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+
+interface Props {
+  title?: string
 }
 
-class OpenAIProvider implements LLMProvider { ... }
-class AnthropicProvider implements LLMProvider { ... }
-class OllamaProvider implements LLMProvider { ... }
+const props = withDefaults(defineProps<Props>(), {
+  title: 'Default Title'
+})
+
+const count = ref(0)
+</script>
+
+<template>
+  <div class="component">
+    <h1>{{ props.title }}</h1>
+    <button @click="count++">Count: {{ count }}</button>
+  </div>
+</template>
+
+<style scoped>
+.component {
+  text-align: center;
+}
+</style>
 ```
 
-## Data Flow
+### Key Differences: React TSX → Vue SFC
 
-### Conversion Flow
+| Aspect | React (current) | Vue 3 SFC (new) |
+|--------|-----------------|-----------------|
+| Props | `props: Props` interface | `defineProps<Props>()` + `withDefaults` |
+| State | `useState` / `useRef` | `ref()` from Vue |
+| Events | `onClick={}` | `@click=""` |
+| Styles | CSS Modules `.module.css` | `<style scoped>` in SFC |
+| Exports | `export default Component` | `<script setup>` auto-exports |
+| Child components | `<Child />` | `<Child />` (same) |
+| CSS handling | Extracted to `.module.css` | Inline `<style scoped>` or extracted |
+
+### Data Flow: Vue Mode
 
 ```
-[Input HTML]
-    ↓
-[Step 1: Parse]  ──  Cheerio.load(html)
-    ↓ AST
-[Step 2: Split]  ──  Detect semantic boundaries → Component Tree
-    ↓ ComponentNodes[]
-[Step 3: Transform]  ──  HTML attributes → JSX attributes
-    ↓ TransformedNodes[]
-[Step 4: CSS Engine]  ──  Extract styles → CSS Modules
-    ↓ CSSFiles[]
-[Step 5: LLM] (optional)  ──  Name components, optimize
-    ↓ EnhancedNodes[]
-[Step 6: Generate]  ──  Write TSX/JSX + CSS files
-    ↓
-[Output Files]
+PipelineContext {
+  ...
+  options: { ...options, framework: 'vue' }
+}
+
+convertStep (modified):
+  if (options.framework === 'vue') {
+    generateVueSFC($, node, components) → VueSFCOutput
+  } else {
+    generateTsx(node, ...) → TSX string
+  }
+
+generateStep (modified):
+  if (options.framework === 'vue') {
+    writeVueSFC(outputPath, vueSFC) → .vue file
+  } else {
+    writeTsx(outputPath, code) → .tsx file
+  }
 ```
 
-### State Management
+### JSX → Vue Template Transformations Required
 
-No runtime state management needed — this is a file-conversion tool.
+| JSX Pattern | Vue Pattern |
+|-------------|-------------|
+| `className="foo"` | `class="foo"` |
+| `onClick={handler}` | `@click="handler"` |
+| `onChange={handler}` | `@change="handler"` |
+| `style={{ color: 'red' }}` | `style="color: red"` (inline object) |
+| `{condition && <Element />}` | `<Element v-if="condition" />` |
+| `{items.map(x => <Item key={x.id} />)}` | `<Item v-for="x in items" :key="x.id" />` |
+| `{value}` | `{{ value }}` |
+| `{/* comment */}` | `<!-- comment -->` |
 
-Pipeline state is passed via `PipelineContext` object through each step.
+### New Components
 
-## Scaling Considerations
+| Component | Purpose | Placement |
+|-----------|---------|-----------|
+| `VueSFCGenerator` | Generate Vue SFC content from ComponentNode | `src/engine/transform/vue.ts` |
+| `TemplateCompiler` | JSX AST → Vue template transformation | `src/engine/transform/vue-template.ts` |
+| `VueTypes` | TypeScript types for Vue SFC output | `src/types/vue.ts` |
 
-| Scale | Architecture Adjustments |
-| ----- | ------------------------ |
-| 0-1 HTML files | Single-threaded sequential pipeline is fine |
-| 1-100 HTML files | Batch processing with Promise.all for parallel file output |
-| 100+ HTML files | Worker pool for parallel conversion, streaming output |
+### Build Order
 
-### Scaling Priorities
+1. `src/types/vue.ts` — Define `VueSFCOutput` type
+2. `src/engine/transform/vue-template.ts` — JSX → Vue template transformer
+3. `src/engine/transform/vue.ts` — VueSFCGenerator combining template + script + style
+4. `convert.ts` modification — Conditionally generate Vue SFC
+5. `generate.ts` modification — Write `.vue` files
+6. `ConvertOptions` extension — Add `framework` option
 
-1. **First bottleneck:** Large HTML files with many nodes — optimize Cheerio traversal
-2. **Second bottleneck:** LLM API calls — rate limiting, batch requests
+---
 
-## Anti-Patterns
+## Feature 3: Autonomous Agent
 
-### Anti-Pattern 1: Regex HTML Parsing
+### Integration Points
 
-**What people do:** Use regex to extract HTML nodes/attributes.
-**Why it's wrong:** HTML is not a regular language; edge cases with nested quotes, self-closing tags, etc.
-**Do this instead:** Use a proper HTML parser (Cheerio, parse5, jsdom).
+| Layer | Component | Change Type | Description |
+|-------|-----------|-------------|-------------|
+| Pipeline | `Pipeline` | Wrap | AgentOrchestrator wraps Pipeline execution |
+| Types | `PipelineContext` | Extend | Add `agentState`, `plan`, `tools` |
+| LLM | `llm-fidelity.ts` | Extend | Add tool-calling support, verification |
+| New | `AgentOrchestrator` | New | Main agent loop: plan → execute → verify → fix |
+| New | `ToolRegistry` | New | Available tools for agent (file ops, LLM, etc.) |
+| New | `VerificationLoop` | New | Verify output, decide fix or accept |
+| New | `AgentPlan` | New | Type for agent's self-generated plan |
 
-### Anti-Pattern 2: Class→className Only
+### Agent Architecture Pattern
 
-**What people do:** Only convert `class` to `className` and call it done.
-**Why it's wrong:** Misses `for`→`htmlFor`, `tabindex`→`tabIndex`, inline `style` attribute, SVG attributes.
-**Do this instead:** Comprehensive attribute mapping covering all React-specific attribute differences.
+```
+AgentOrchestrator {
+  tools: ToolRegistry
+  llm: LLMProvider
 
-### Anti-Pattern 3: Generating One Giant Component
+  async run(html, options): Promise<AgentResult> {
+    // Phase 1: Plan
+    const plan = await this.createPlan(html, options)
+    this.logPlan(plan)
 
-**What people do:** Convert the entire HTML page into a single massive React component.
-**Why it's wrong:** Unmaintainable, no reusability, defeats the purpose of React components.
-**Do this instead:** Split into a component tree based on semantic HTML structure.
+    // Phase 2: Execute
+    let ctx = await this.executePlan(plan)
 
-## Integration Points
+    // Phase 3: Verify
+    const verified = await this.verificationLoop.verify(ctx)
 
-### External Services
+    // Phase 4: Fix (if needed)
+    if (!verified.success && plan.maxIterations > 0) {
+      for (let i = 0; i < plan.maxIterations; i++) {
+        const fixes = await this.generateFixes(ctx, verified.issues)
+        ctx = await this.executeFixes(fixes)
+        const reVerified = await this.verificationLoop.verify(ctx)
+        if (reVerified.success) break
+      }
+    }
 
-| Service | Integration Pattern | Notes |
-| ------- | ------------------ | ----- |
-| OpenAI API | REST SDK (optional) | User configures API key; for LLM naming pass |
-| Anthropic API | REST SDK (optional) | Same pattern as OpenAI |
-| Ollama | Local HTTP API (optional) | No API key needed; for local LLM |
+    return this.finalize(ctx)
+  }
+}
+```
 
-### Internal Boundaries
+### Tool Registry Pattern
 
-| Boundary | Communication | Notes |
-| -------- | ------------- | ----- |
-| CLI ↔ Pipeline | Function call with config | Clean interface |
-| Pipeline step → next step | PipelineContext object | Each step enriches context |
-| Engine → Engine | Via PipelineContext only | No direct engine-to-engine calls |
+```typescript
+class ToolRegistry {
+  private tools: Map<string, Tool> = new Map()
+
+  register(name: string, tool: Tool) {
+    this.tools.set(name, tool)
+  }
+
+  execute(name: string, args: any): Promise<any>
+
+  list(): Tool[]  // For LLM context
+}
+
+interface Tool {
+  name: string
+  description: string
+  parameters: z.ZodSchema
+  execute(args: any): Promise<ToolResult>
+}
+
+// Initial tools for h2ui agent:
+// - read_file(path): string
+// - write_file(path, content): void
+// - run_pipeline(html, options): PipelineContext
+// - run_llm(prompt, schema): structured result
+// - verify_output(ctx): VerificationResult
+```
+
+### Verification Loop Pattern
+
+```typescript
+class VerificationLoop {
+  constructor(private llm: LLMProvider) {}
+
+  async verify(ctx: PipelineContext): Promise<VerificationResult> {
+    const checks = [
+      this.checkFidelity(ctx),      // Does output match input HTML?
+      this.checkSyntax(ctx),         // Valid TSX/Vue syntax?
+      this.checkSemantics(ctx),      // Meaningful component structure?
+      this.checkAccessibility(ctx),  // Basic a11y checks?
+    ]
+
+    const results = await Promise.all(checks)
+    return {
+      success: results.every(r => r.passed),
+      issues: results.flatMap(r => r.issues)
+    }
+  }
+}
+```
+
+### Integration with Existing LLM Steps
+
+The existing `llm-fidelity.ts` performs review + modification. The AgentOrchestrator wraps this with tool-calling:
+
+```
+Current: Pipeline → [llmFidelityStep] → modifies component tree
+Agent:    Pipeline → [llmFidelityStep + tool calling] → can request fixes via tools
+```
+
+**Key change:** `llm-fidelity.ts` must support tool calls (function calling) rather than just structured output. This requires:
+1. LLM provider tool-calling capability (OpenAI function calling, Anthropic tool use)
+2. ToolRegistry passed to LLM step
+3. Response parsing for tool calls vs direct responses
+
+### New Components
+
+| Component | Purpose | Placement |
+|-----------|---------|-----------|
+| `AgentOrchestrator` | Main agent loop | `src/agent/Orchestrator.ts` |
+| `ToolRegistry` | Tool registration and execution | `src/agent/ToolRegistry.ts` |
+| `VerificationLoop` | Output verification | `src/agent/VerificationLoop.ts` |
+| `AgentPlan` | Self-generated plan type | `src/types/agent.ts` |
+| `AgentResult` | Final result type | `src/types/agent.ts` |
+
+### Agent Loop States
+
+```
+IDLE → PLANNING → EXECUTING → VERIFYING → FIXING → COMPLETE
+                      ↓                      ↓
+                   ERROR ←──────────────────┘
+```
+
+### Build Order
+
+1. `src/types/agent.ts` — Define AgentPlan, AgentResult, Tool types
+2. `src/agent/ToolRegistry.ts` — Tool registry with initial tools
+3. `src/agent/VerificationLoop.ts` — Verification logic
+4. `src/agent/Orchestrator.ts` — Main orchestrator (initially without fix loop)
+5. CLI integration — Add `--agent` flag
+6. Fix loop iteration — Complete agent loop with self-repair
+
+---
+
+## Cross-Feature Integration
+
+### Feature Dependencies
+
+```
+Batch Glob
+    └── No dependencies on Vue or Agent
+
+Vue 3 SFC
+    └── No dependencies on Batch or Agent
+    └── Can be combined with Batch (batch generates Vue files)
+
+Agent
+    └── Can use Batch internally (agent processes multiple files)
+    └── Can use Vue output (agent generates Vue components)
+```
+
+### Unified Options Structure
+
+```typescript
+interface ConvertOptions {
+  // Existing
+  out: string;
+  typescript: boolean;
+  strict: boolean;
+  split: boolean;
+  cssMode: 'module' | 'scoped' | 'inline' | 'global';
+  llm?: LLMConfig;
+
+  // v1.1: Framework
+  framework?: 'react' | 'vue';  // default: 'react'
+
+  // v1.1: Batch
+  files?: string[];  // If set, process multiple files
+
+  // v1.1: Agent
+  agent?: {
+    enabled: boolean;
+    maxIterations?: number;
+    verifyFidelity?: boolean;
+  };
+}
+```
+
+---
+
+## Phase-Specific Architecture Notes
+
+### Phase 1: Batch Glob
+
+**Priority:** Medium — enables workflow improvement
+**Complexity:** Low — mostly CLI changes, pipeline unchanged
+
+Key insight: Batch can reuse existing Pipeline without modification. The change is in how CLI invokes Pipeline (loop vs single run).
+
+### Phase 2: Vue 3 SFC
+
+**Priority:** Medium — expands target framework
+**Complexity:** Medium — requires JSX→Vue transformation, new file generation
+
+Key insight: The convertStep generates different output based on `options.framework`. This is a conditional branch, not a new pipeline. Minimal pipeline changes.
+
+### Phase 3: Autonomous Agent
+
+**Priority:** High — core differentiator
+**Complexity:** High — requires new orchestration layer, tool system, verification
+
+Key insight: Agent wraps Pipeline, doesn't replace it. Pipeline remains the execution engine; Agent provides self-repair loop around it.
+
+---
+
+## Recommended Build Order
+
+1. **Batch Glob** — Simplest integration, validates CLI changes first
+2. **Vue 3 SFC** — Self-contained output format change, no new execution model
+3. **Agent** — Most complex, depends on having stable Pipeline to wrap
+
+### Rationale
+
+- Batch is CLI-layer only — no pipeline changes, low risk
+- Vue requires new generator but pipeline flow unchanged
+- Agent needs stable Pipeline to wrap — builds on both prior phases
+
+---
 
 ## Sources
 
-- [html-to-react-components architecture](https://github.com/roman01la/html-to-react-components/tree/master/lib) - JSdom + Babel based
-- [Magic Patterns CSS extraction approach](https://www.magicpatterns.com/blog/any-website-to-react-component) - getComputedStyle optimization
-- [Anima hybrid generation](https://www.animaapp.com/blog/product-updates/enhancing-reactjs-code-generation-with-llms/) - Rule-based + LLM two-pass
-
----
-*Architecture research for: h2ui (HTML-to-React CLI)*
-*Researched: 2026-05-21*
+- Vue 3 SFC structure: [Vue.js SFC Documentation](https://vuejs.org/guide/scaling-up/sfc.html)
+- Existing codebase: `src/pipeline/index.ts`, `src/pipeline/steps/convert.ts`, `src/cli/commands/convert.ts`
+- Confidence: MEDIUM — based on codebase analysis + Vue docs; no external search needed for architecture patterns (standard Node.js/CLI patterns)

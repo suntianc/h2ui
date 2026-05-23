@@ -1,135 +1,386 @@
-# Feature Research
+# Feature Research - h2ui v1.1 New Features
 
-**Domain:** HTML-to-React Component Conversion CLI Tool
-**Researched:** 2026-05-21
-**Confidence:** HIGH
+**Domain:** HTML-to-Framework Component Conversion CLI Tool
+**Researched:** 2026-05-23
+**Confidence:** MEDIUM-HIGH (established patterns, some gaps in agent architecture specifics)
 
-## Feature Landscape
+## Feature Landscape - v1.1 New Features
 
-### Table Stakes (Users Expect These)
+### Feature 1: Batch Conversion with Glob Patterns
+
+**Input:** `h2u "src/**/*.html"` → converts all matching HTML files
+
+#### Table Stakes
 
 | Feature | Why Expected | Complexity | Notes |
-| ------- | ------------ | ---------- | ----- |
-| CLI input using file path | Primary interaction mode | LOW | `h2ui input.html` |
-| HTML → JSX attribute conversion | Core purpose | MEDIUM | class→className, style→object, etc. |
-| Output component files to disk | Expected CLI behavior | LOW | Write to output directory |
-| Support for TSX output | Modern React standard | MEDIUM | TypeScript prop interfaces |
-| Basic error handling / validation | Any CLI tool needs this | LOW | Invalid HTML, missing file |
-| --help / --version flags | CLI convention | LOW | Standard commander behavior |
-| Config file support | Expected for tool customization | MEDIUM | .h2uirc or package.json config |
+|---------|--------------|------------|-------|
+| Glob pattern input | Standard CLI convention | LOW | `"**/*.html"`, `"src/**/*.html"` |
+| Multiple file output | Basic batch expectation | LOW | Per-file output preserving structure |
+| Error isolation | One bad file shouldn't kill batch | LOW | Continue on error, report at end |
+| Progress indication | Long batches need feedback | LOW | "Converting 3/15 files..." |
 
-### Differentiators (Competitive Advantage)
+#### Differentiators
 
 | Feature | Value Proposition | Complexity | Notes |
-| ------- | ----------------- | ---------- | ----- |
-| **Automatic component splitting** | Unlike html-to-react-components (needs manual `data-component` markers), h2ui auto-detects semantic boundaries | HIGH | Core differentiator |
-| **CSS extraction → CSS Modules** | Produces production-ready style files, not just inline styles | HIGH | Another key differentiator |
-| **Hybrid rules + LLM** | Rule engine handles structure; LLM handles naming & cleanup | MEDIUM | More reliable than pure-LLM approaches |
-| **Configurable LLM provider** | Bring your own API key (OpenAI, Anthropic, Ollama) | MEDIUM | User freedom |
-| **Interactive preview mode** | Show component tree before writing files | MEDIUM | Developer confidence |
-| **Inline style → CSS Module extraction** | Extract inline styles to proper style files | HIGH | Differentiator over simple class→className tools |
+|---------|-------------------|------------|-------|
+| **Parallel processing** | Speed up large batches | MEDIUM | vs sequential (default) |
+| **Smart output structure** | Maintain source directory layout | MEDIUM | `src/a.html` → `output/src/a/` |
+| **Incremental mode** | Skip already-converted files | MEDIUM | `--force` to override |
+| **Glob negation patterns** | Exclude specific files | LOW | `"**/*.html"`, `!"**/node_modules/**"` |
 
-### Anti-Features (Commonly Requested, Often Problematic)
+#### Anti-Features
 
-| Feature | Why Requested | Why Problematic | Alternative |
-| ------- | ------------- | --------------- | ----------- |
-| WYSIWYG preview | "See what it looks like" | Bloat for CLI tool; belongs in separate tool | CLI-only; preview via browser if needed |
-| Two-way sync (HTML ↔ React) | "Edit and re-export" | Huge complexity, fragile mapping | One-way conversion; re-run on new HTML |
-| Full website scraping | "Convert any URL" | Rate limits, dynamic content, CORS | User provides local HTML file |
-| Pure-LLM conversion | "AI does everything" | Unreliable, expensive, inconsistent | Hybrid: rules for structure, LLM for naming |
-| Image/base64 extraction | "Convert embedded images" | Binary handling, path resolution | Leave image refs as-is; user manages assets |
+| Anti-Feature | Why Avoid | Alternative |
+|--------------|-----------|-------------|
+| Recursive watch mode in batch | Belongs in watch feature, not batch | Separate `--watch` flag later |
+| Automatic file merging | Complexity explosion | User merges if needed |
+| Parallel + LLM without queue | API rate limiting, cost spikes | Sequential LLM or configurable concurrency |
 
-## Feature Dependencies
+#### Implementation Approach
 
-```
-Automatic Component Splitting
-    └──requires──> HTML AST Parsing (Cheerio)
-    └──requires──> Semantic Tag Detection (header/nav/section/footer)
+```typescript
+// Sequential (safe default)
+for (const file of files) {
+  await convertFile(file);
+}
 
-CSS Extraction
-    └──requires──> CSS Parsing (css-tree)
-    └──requires──> Style-to-CSS-Module Mapping
-
-Hybrid Rules + LLM
-    └──requires──> Rule-based Component Splitting
-    └──requires──> LLM Provider Interface
-    └──enhances──> Component Naming
-    └──enhances──> Prop Detection
-
-TSX Output
-    └──requires──> TypeScript Code Generation
-    └──requires──> Prop Type Inference
+// Parallel (opt-in, controlled concurrency)
+const concurrency = 4;
+for (const batch of chunk(files, concurrency)) {
+  await Promise.all(batch.map(convertFile));
+}
 ```
 
-### Dependency Notes
+**Library:** `fast-glob` (mrmlnc/fast-glob) - async, fast, GitHub-style patterns
+**Config option:** `--parallel` / `--concurrency N` / `--no-parallel`
 
-- **Automatic Component Splitting requires HTML AST Parsing:** Without a parsed AST, you can't detect nested component boundaries
-- **CSS Extraction requires CSS Parsing:** Inline styles need css-tree to convert to CSS Module format
-- **Hybrid approach requires Rule-based splitting first:** LLM works on top of structured output, not raw HTML
+#### Dependencies
 
-## MVP Definition
+```
+Batch Glob Processing
+    └──requires──> fast-glob library
+    └──requires──> Existing single-file conversion logic
+    └──enhances──> Error aggregation/reporting
+    └──optional──> Parallel execution (controlled concurrency)
+```
 
-### Launch With (v1)
+---
 
-- [x] CLI file input (`h2ui input.html`)
-- [x] HTML attribute → JSX conversion
-- [x] Output component files to disk
-- [x] TSX/JSX output option
-- [x] Basic semantic component splitting (header/nav/section/footer/main/article)
-- [x] Inline style → CSS Module extraction
-- [x] --help / --version
-- [x] Error handling for invalid input
+### Feature 2: Vue 3 + TypeScript Output
 
-### Add After Validation (v1.x)
+**Input:** HTML file → **Output:** `Component.vue` (Single File Component)
 
-- [ ] LLM integration for naming and optimization
-- [ ] Config file support (.h2uirc)
-- [ ] Interactive preview mode
-- [ ] Configurable output directory
+#### Table Stakes
 
-### Future Consideration (v2+)
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| `.vue` file extension | Vue 3 convention | LOW | Standard SFC format |
+| `<template>` block | Required SFC block | LOW | HTML content wrapped |
+| `<script setup lang="ts">` | Vue 3 + TypeScript | MEDIUM | Modern Composition API |
+| `<style scoped>` | Vue CSS isolation | LOW | CSS Modules equivalent |
+| Basic attribute mapping | HTML → Vue syntax | MEDIUM | class→:class, style binding |
 
-- [ ] Multi-framework support (Vue, Svelte, Solid)
-- [ ] Batch HTML file conversion
-- [ ] Watch mode (auto-convert on file change)
-- [ ] Tailwind CSS class inference
-- [ ] Plugin system for custom component targets
+#### Differentiators
 
-## Feature Prioritization Matrix
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| **Reactive prop types** | TypeScript interfaces for props | MEDIUM | vs `defineProps` without types |
+| **v-model support** | Form element binding | MEDIUM | Detect input/textarea/select |
+| **Vue event handling** | @click instead of onClick | MEDIUM | `onclick` → `@click` |
+| **Slot detection** | Named slots for child content | HIGH | When child elements detected |
+| **Conditional/render logic** | v-if, v-for transformation | HIGH | Semantic HTML → Vue directives |
+| **Component ref extraction** | Child components from HTML | MEDIUM | Nested structure → imported components |
 
-| Feature | User Value | Implementation Cost | Priority |
-| ------- | ---------- | ------------------ | -------- |
-| CLI file input | HIGH | LOW | P1 |
-| HTML→JSX conversion | HIGH | MEDIUM | P1 |
-| Output files to disk | HIGH | LOW | P1 |
-| Semantic component splitting | HIGH | HIGH | P1 |
-| CSS extraction (inline→Module) | HIGH | HIGH | P1 |
-| TSX/TS output option | HIGH | MEDIUM | P1 |
-| --help / --version | MEDIUM | LOW | P1 |
-| LLM integration | MEDIUM | MEDIUM | P2 |
-| Config file | MEDIUM | MEDIUM | P2 |
-| Interactive preview | LOW | MEDIUM | P2 |
-| Multi-framework | MEDIUM | HIGH | P2+ |
+#### Anti-Features
 
-## Competitor Feature Analysis
+| Anti-Feature | Why Avoid | Alternative |
+|--------------|-----------|-------------|
+| Options API (`export default { ... }`) | Less common, verbose | `<script setup>` (default) |
+| Render functions | Harder to read/maintain | Template blocks |
+| Scoped style extraction | Complex CSS mapping | Basic `<style scoped>` first |
+| Vue Router integration | Out of scope | Manual router setup |
+| Pinia/store generation | Too opinionated | User adds stores manually |
 
-| Feature | html-to-react-components | Magic Patterns | h2ui (planned) |
-| ------- | ----------------------- | -------------- | --------------- |
-| Manual component markers | Yes (`data-component`) | No | **No — auto split** |
-| CLI tool | Yes | No (Chrome ext) | **Yes** |
-| CSS extraction | No | Inline styles only | **CSS Modules** |
-| LLM integration | No | Yes (optional pass) | **Hybrid approach** |
-| TypeScript output | Yes (v3+) | Yes | **Yes** |
-| Auto component naming | Uses marker name | LLM | **Rules + LLM** |
-| Multi-framework | React only | React only | **React first, extensible** |
+#### Vue 3 SFC Structure
+
+```vue
+<template>
+  <div class="container">
+    <header class="header">
+      <nav class="nav">
+        <a href="/">Home</a>
+      </nav>
+    </header>
+    <main class="main">
+      <section class="hero">
+        <h1>Welcome</h1>
+      </section>
+    </main>
+    <footer class="footer">
+      <p>Footer</p>
+    </footer>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+
+interface Props {
+  title?: string
+}
+
+withDefaults(defineProps<Props>(), {
+  title: 'Default Title'
+})
+
+const count = ref(0)
+</script>
+
+<style scoped>
+.container {
+  min-height: 100vh;
+}
+.header {
+  background: #333;
+}
+.nav a {
+  color: white;
+  text-decoration: none;
+}
+</style>
+```
+
+#### HTML → Vue Attribute Mapping
+
+| HTML | Vue 3 | Notes |
+|------|-------|-------|
+| `class="x"` | `class="x"` | Unchanged |
+| `onclick` | `@click` | Event binding |
+| `onchange` | `@change` | Event binding |
+| `for="id"` | `for="id"` | Label attribute |
+| `style="color:red"` | `:style="{ color: 'red' }"` | Dynamic binding |
+| `value="x"` | `modelValue` or `value` | Depends on context |
+| `disabled` | `:disabled="true"` | Boolean attribute |
+
+#### Dependencies
+
+```
+Vue 3 Output
+    └──requires──> Existing HTML parsing (Cheerio)
+    └──requires──> Template generation engine
+    └──requires──> SFC file writer (.vue extension)
+    └──modifies──> CSS extraction (→ scoped style blocks)
+    └──optional──> Vue-specific component detection
+```
+
+**Config options:**
+- `--framework vue3` (default: react)
+- `--vue-style` (scoped | modules | plain)
+
+---
+
+### Feature 3: Full Autonomous Agent with Self-Repair
+
+**Concept:** LLM-powered agent that plans conversion, calls tools, verifies output, and self-corrects
+
+#### Table Stakes
+
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| **Single conversion loop** | One-shot LLM call | MEDIUM | Input → LLM → Output |
+| **Error detection** | LLM can identify issues | LOW | "This looks wrong" |
+| **Retry on failure** | Basic self-healing | LOW | Try again with feedback |
+
+#### Differentiators
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| **Multi-step planning** | Agent thinks before acting | HIGH | Decompose task into steps |
+| **Tool calling** | Use tools (read file, run command) | HIGH | LLM function calling |
+| **Verification loop** | Check output before finishing | MEDIUM | LLM validates own output |
+| **Self-repair cycle** | Fix issues found in verification | HIGH | Planning → Execute → Verify → Fix |
+| **State persistence** | Track conversation across steps | MEDIUM | Memory of previous attempts |
+| **Human-in-loop (optional)** | Approve before dangerous actions | MEDIUM | `--approve` flag |
+
+#### Anti-Features
+
+| Anti-Feature | Why Avoid | Alternative |
+|--------------|-----------|-------------|
+| Unlimited retries | Infinite loops, cost explosion | Max 3 retries, configurable |
+| Auto-modify source HTML | Destructive, unexpected | Only generate output |
+| Full autonomous without guardrails | Risk of wrong code | Verification + approval |
+| Complex multi-file refactoring | Scope creep | Single-file conversion focus |
+| Persistent agent mode (daemon) | Complexity, resource cost | Stateless single conversion |
+
+#### Agent Loop Architecture
+
+```
+┌─────────────────────────────────────────┐
+│  INPUT: HTML file + task description    │
+└─────────────────┬───────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
+│  PLANNER: LLM decides approach          │
+│  "This HTML has X sections. I should:   │
+│   1. Parse structure                    │
+│   2. Extract components                 │
+│   3. Convert to Vue/React               │
+│   4. Verify output"                     │
+└─────────────────┬───────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
+│  EXECUTOR: Run conversion tool          │
+│  - Call conversion function             │
+│  - Pass structured context             │
+└─────────────────┬───────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────┐
+│  VERIFIER: Check output quality         │
+│  - LLM reviews generated code           │
+│  - Syntax check                        │
+│  - Fidelity check (renders same?)       │
+└─────────────────┬───────────────────────┘
+                  │
+         ┌───────┴───────┐
+         │ Pass?         │
+         └───────┬───────┘
+          Yes    │ No
+    ┌────────────┘    │
+    ▼                ▼
+┌─────────┐    ┌─────────────────┐
+│ OUTPUT  │    │ REPAIR: LLM     │
+│ Success │    │ fix issues      │
+└─────────┘    │ + retry         │
+               └────────┬────────┘
+                        │
+                   Max retries?
+                   ┌────┴────┐
+                   │Exceeded │
+                   └────┬────┘
+                        │
+                   ┌────┴────┐
+                   │ Report  │
+                   │ failure │
+                   └────────┘
+```
+
+#### Tool Calling Patterns
+
+**Pattern A: Single-turn (v1.0 current)**
+```
+User → "Convert this HTML"
+LLM → Returns conversion result
+```
+No tools, no iteration.
+
+**Pattern B: Multi-turn with tools (recommended for v1.1)**
+```
+User → "Convert this HTML with self-repair"
+LLM → [Tool: convert_html] → Returns initial result
+LLM → [Tool: verify_output] → Returns issues found
+LLM → [Tool: fix_issues] → Returns fixed result
+LLM → [Tool: final_check] → Confirms success
+```
+
+**Pattern C: Full agent loop (v2 consideration)**
+```
+LLM has access to:
+- convert_html tool
+- verify_syntax tool
+- verify_fidelity tool
+- read_file tool
+- write_file tool
+- ask_user tool (optional approval)
+
+LLM decides sequence dynamically.
+```
+
+#### LLM Provider Tool Calling Support
+
+| Provider | Tool Calling | Notes |
+|----------|--------------|-------|
+| OpenAI (GPT-4) | Native function calling | Full support |
+| Anthropic | Native tool use | Claude 3+ |
+| Ollama | Limited/capabilities varies | May not support |
+| Local models | Generally NO | Require vLLM or similar |
+
+**Implementation:** Use OpenAI/Anthropic SDK tool calling APIs, fallback to single-turn without tools for Ollama.
+
+#### Dependencies
+
+```
+Autonomous Agent
+    └──requires──> Existing conversion logic (tools)
+    └──requires──> LLM provider with function calling
+    └──requires──> Verification logic
+    └──optional──> Retry/repair logic
+    └──optional──> Approval gate
+```
+
+**Config options:**
+- `--agent` (enable agent mode)
+- `--agent-max-retries N` (default: 3)
+- `--agent-approve` (require human approval)
+
+---
+
+## Feature Comparison Matrix
+
+| Feature | Batch Glob | Vue 3 Output | Autonomous Agent |
+|---------|-----------|-------------|------------------|
+| **Complexity** | LOW-MEDIUM | MEDIUM-HIGH | HIGH |
+| **Dependencies** | Existing conversion | Existing conversion | Conversion + verification |
+| **Risk** | File I/O errors | SFC format issues | LLM cost, infinite loops |
+| **Scope** | Processing orchestration | Code generation | Code generation + self-repair |
+| **User Value** | Batch efficiency | Vue 3 support | Output quality |
+
+---
+
+## Recommended Phase Structure
+
+### Phase 1: Batch Processing (simplest new feature)
+- Glob pattern input support
+- Sequential file processing (default)
+- Error isolation
+- Optional: parallel with concurrency control
+
+### Phase 2: Vue 3 Output (medium complexity)
+- `.vue` SFC file generation
+- Basic attribute mapping
+- `<script setup lang="ts">` structure
+- `<style scoped>` support
+- Config flag: `--framework vue3`
+
+### Phase 3: Autonomous Agent (highest complexity)
+- Single-turn with verification (no tools)
+- Retry loop on failure
+- Tool calling support (OpenAI/Anthropic)
+- Optional: human approval gate
+- Max retries to prevent infinite loops
+
+---
+
+## Gaps to Address Later
+
+1. **Agent memory:** How to persist state across retries? (In-memory for v1.1)
+2. **Vue 3 composition:** Detect reusable logic into composables? (v2)
+3. **Batch + Agent:** Should agent mode apply per-file or overall? (v2)
+4. **Agent evaluation:** How to measure "better" output? (Need metrics)
+
+---
 
 ## Sources
 
-- [roman01la/html-to-react-components](https://github.com/roman01la/html-to-react-components) - Existing CLI tool, 2.2k stars
-- [Magic Patterns - Website to React Component](https://www.magicpatterns.com/blog/any-website-to-react-component) - Chrome extension approach
-- [Anima - LLM Code Generation](https://www.animaapp.com/blog/product-updates/enhancing-reactjs-code-generation-with-llms/) - Hybrid rule + LLM approach
-- [html-to-react-components REPL](https://roman01la.github.io/html-to-react-components/repl/) - Online demo
+- [Vue 3 Single File Component Spec](https://vuejs.org/api/sfc-spec.html) - SFC structure
+- [fast-glob - GitHub](https://github.com/mrmlnc/fast-glob) - Glob patterns
+- [OpenAI Function Calling](https://platform.openai.com/docs/guides/function-calling) - Tool calling
+- [Anthropic Tool Use](https://docs.anthropic.com/claude/docs/tool-use) - Claude tool use
+- [LangChain Agents](https://python.langchain.com/docs/concepts/agents/) - Agent patterns
+- [ReAct Pattern](https://react-lm.github.io/) - Reasoning + Acting agent loop
 
 ---
-*Feature research for: h2ui (HTML-to-React CLI)*
-*Researched: 2026-05-21*
+*Feature research for: h2ui v1.1 - New Features*
+*Researched: 2026-05-23*
