@@ -4,7 +4,7 @@ milestone: v1.1
 milestone_name: Batch + Vue3 + Agent
 status: planning
 last_updated: "2026-05-23"
-last_activity: 2026-05-23
+last_activity: "2026-05-23"
 progress:
   total_phases: 3
   completed_phases: 0
@@ -91,6 +91,17 @@ Plans:
 - [ ] 07-03-PLAN.md — Wave 2: CSS scoped + component splitting with Vue imports
 
 ---
+
+### Phase 07.1: Vue Preview Support — Add Vue SFC preview server support (INSERTED)
+
+**Goal:** Add Vue SFC preview server support to the existing `h2ui preview` command. When output directory contains `.vue` files, automatically switch to Vue preview mode with `@vitejs/plugin-vue` instead of `@vitejs/plugin-react`.
+
+**Requirements**: (none - TBD in roadmap)
+**Depends on:** Phase 7
+**Plans:** 1 plan
+
+Plans:
+- [x] 07.1-01-PLAN.md — Wave 1: Framework auto-detection, Vue mode in server.ts, CLI --framework flag
 
 ### Phase 8: Autonomous Agent
 
