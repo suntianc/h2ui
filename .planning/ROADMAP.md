@@ -98,7 +98,7 @@ Plans:
 
 **Requirements**: (none - TBD in roadmap)
 **Depends on:** Phase 7
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [x] 07.1-01-PLAN.md — Wave 1: Framework auto-detection, Vue mode in server.ts, CLI --framework flag
