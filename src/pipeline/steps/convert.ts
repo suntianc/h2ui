@@ -34,9 +34,11 @@ function mapVueAttributes(rawAttrs: Record<string, string>, warnings: string[]):
       attrStrings.push(`${vueEvent}="${value}"`);
     } else if (VUE_BOOLEAN_ATTRS.has(key)) {
       // disabled, checked, readonly -> :disabled, :checked, :readonly
-      attrStrings.push(`:${key}="${value}"`);
+      // When value equals key (e.g., disabled="disabled"), output disabled="${key}"
+      attrStrings.push(`${key}="${key}"`);
     } else if (key === 'className') {
-      // Skip for Vue — use class directly
+      // Convert className to class for Vue
+      attrStrings.push(`class="${value}"`);
     } else if (key === 'htmlFor') {
       // Skip for Vue — use for directly
     } else if (value === undefined || value === null) {
@@ -103,10 +105,13 @@ function renderVueTemplate(
   const opening = `<${tagName}${attrStr}>`;
   const closing = `</${tagName}>`;
 
-  if (isVoid || !hasNonEmptyChildren) {
-    // Self-closing void elements in Vue templates need proper handling
-    // Use self-closing for void elements
+  if (isVoid) {
+    // Only void elements can self-close
     return `<${tagName}${attrStr} />`;
+  }
+  // Non-void elements without children need full closing tag
+  if (!hasNonEmptyChildren) {
+    return `<${tagName}${attrStr}></${tagName}>`;
   }
 
   // Generate children content
