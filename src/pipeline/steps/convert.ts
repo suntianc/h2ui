@@ -6,7 +6,7 @@ import { parseInlineStyle } from '../../engine/transform/style.js';
 import { isVoidElement, formatJsxTag } from '../../engine/transform/elements.js';
 import { toPascalCase } from '../../util/file.js';
 import { flattenTree } from '../../util/tree.js';
-import { isInheritable } from '../../engine/css/extract.js';
+import { extractStylesFromElement } from '../../engine/css/extract.js';
 
 // Vue attribute mapping sets
 const VUE_EVENT_ATTRS = new Set([
@@ -26,10 +26,8 @@ function mapVueAttributes(rawAttrs: Record<string, string>, warnings: string[]):
 
   for (const [key, value] of Object.entries(rawAttrs)) {
     if (key === 'style') {
-      // Vue accepts inline style strings as-is
-      if (value) {
-        attrStrings.push(`style="${value}"`);
-      }
+      // Skip style attribute — CSS is extracted to <style scoped> block
+      // Do NOT output inline styles in Vue templates
     } else if (VUE_EVENT_ATTRS.has(key)) {
       // onclick -> @click, oninput -> @input, etc.
       const vueEvent = '@' + key.slice(2);
@@ -438,24 +436,9 @@ function generateRootComponent(
  * Extract CSS properties from an element's subtree.
  * Collects inline styles from style attributes.
  */
-function extractCssProperties($: CheerioAPI, el: Element): Record<string, string> {
-  const result: Record<string, string> = {};
-
-  // Parse this element's inline style
-  const styleAttr = $(el).attr('style');
-  if (styleAttr) {
-    const parsed = parseInlineStyle(styleAttr);
-    if (parsed) {
-      // Filter out inheritable CSS properties
-      for (const [prop, value] of Object.entries(parsed)) {
-        if (!isInheritable(prop)) {
-          result[prop] = value;
-        }
-      }
-    }
-  }
-
-  return result;
+function extractCssProperties($: CheerioAPI, el: Element, warnings: string[]): Record<string, string> {
+  // Use extractStylesFromElement which recursively traverses all descendants
+  return extractStylesFromElement($, el, warnings);
 }
 
 // Named exports for Vue rendering
@@ -489,8 +472,13 @@ export const convertStep: PipelineStep = {
           if (node === ctx.componentTree) continue;
 
           // Extract CSS properties from element subtree
-          const cssProperties = extractCssProperties($, node.element);
+          const cssProperties = extractCssProperties($, node.element, newCtx.warnings);
           node.cssProperties = cssProperties;
+
+          // Remove style attribute after extraction so it's not output in template
+          if (isVue) {
+            $(node.element).removeAttr('style');
+          }
 
           if (isVue) {
             // Vue mode: generate template HTML using renderVueTemplate
@@ -510,8 +498,13 @@ export const convertStep: PipelineStep = {
         }
 
         // Generate root component that imports children
-        const rootCssProperties = extractCssProperties($, ctx.componentTree.element);
+        const rootCssProperties = extractCssProperties($, ctx.componentTree.element, newCtx.warnings);
         ctx.componentTree.cssProperties = rootCssProperties;
+
+        // Remove style attribute after extraction so it's not output in template
+        if (isVue) {
+          $(ctx.componentTree.element).removeAttr('style');
+        }
 
         if (isVue) {
           // Vue mode: generate root Vue template

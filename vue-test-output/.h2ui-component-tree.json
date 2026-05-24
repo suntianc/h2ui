@@ -1,0 +1,148 @@
+{
+  "name": "Index",
+  "tag": "body",
+  "isRepeated": false,
+  "children": [
+    {
+      "name": "SiteHeaderHeader",
+      "tag": "header",
+      "isRepeated": false,
+      "children": [
+        {
+          "name": "H1",
+          "tag": "h1",
+          "isRepeated": false,
+          "children": []
+        },
+        {
+          "name": "Navigation",
+          "tag": "nav",
+          "isRepeated": false,
+          "children": [
+            {
+              "name": "A",
+              "tag": "a",
+              "isRepeated": false,
+              "children": []
+            },
+            {
+              "name": "A",
+              "tag": "a",
+              "isRepeated": false,
+              "children": []
+            },
+            {
+              "name": "A",
+              "tag": "a",
+              "isRepeated": false,
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Main",
+      "tag": "main",
+      "isRepeated": false,
+      "children": [
+        {
+          "name": "Section",
+          "tag": "section",
+          "isRepeated": false,
+          "children": [
+            {
+              "name": "H2",
+              "tag": "h2",
+              "isRepeated": false,
+              "children": []
+            },
+            {
+              "name": "P",
+              "tag": "p",
+              "isRepeated": false,
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Section",
+          "tag": "section",
+          "isRepeated": false,
+          "children": [
+            {
+              "name": "H3",
+              "tag": "h3",
+              "isRepeated": false,
+              "children": []
+            },
+            {
+              "name": "Form",
+              "tag": "form",
+              "isRepeated": false,
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Section",
+          "tag": "section",
+          "isRepeated": false,
+          "children": [
+            {
+              "name": "H3",
+              "tag": "h3",
+              "isRepeated": false,
+              "children": []
+            },
+            {
+              "name": "Div",
+              "tag": "div",
+              "isRepeated": false,
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "Section",
+          "tag": "section",
+          "isRepeated": false,
+          "children": [
+            {
+              "name": "H3",
+              "tag": "h3",
+              "isRepeated": false,
+              "children": []
+            },
+            {
+              "name": "Div",
+              "tag": "div",
+              "isRepeated": false,
+              "children": []
+            },
+            {
+              "name": "Div",
+              "tag": "div",
+              "isRepeated": false,
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Footer",
+      "tag": "footer",
+      "isRepeated": false,
+      "children": [
+        {
+          "name": "Div",
+          "tag": "div",
+          "isRepeated": false,
+          "children": []
+        }
+      ]
+    }
+  ],
+  "headLinks": []
+}
