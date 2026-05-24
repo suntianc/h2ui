@@ -52,8 +52,12 @@ function detectFramework(outputDir: string): Framework {
 function resolveRootComponentName(outputDir: string, framework: Framework): string {
   const treePath = path.join(outputDir, '.h2ui-component-tree.json');
   if (fs.existsSync(treePath)) {
-    const tree = JSON.parse(fs.readFileSync(treePath, 'utf8')) as PreviewTreeNode;
-    if (tree?.name) return tree.name;
+    try {
+      const tree = JSON.parse(fs.readFileSync(treePath, 'utf8')) as PreviewTreeNode;
+      if (tree?.name) return tree.name;
+    } catch (_) {
+      // Fall through to file-based detection
+    }
   }
 
   let files: string[];
@@ -97,7 +101,9 @@ function readHeadLinks(outputDir: string): string[] {
       if (tree && Array.isArray(tree.headLinks)) {
         return tree.headLinks;
       }
-    } catch (_) {}
+    } catch (_) {
+      console.warn(`[preview] Warning: Failed to parse ${treePath}, headLinks will be empty`);
+    }
   }
   return [];
 }
@@ -252,19 +258,21 @@ export async function startPreviewServer(
     )
       return;
 
+    let rebuildSuccess = false;
     try {
       syncOutputFiles(outputDir, componentsDir);
       const nextRoot = resolveRootComponentName(outputDir, detectedFramework);
       const headLinks = readHeadLinks(outputDir);
       writePreviewApp(runtimeRoot, nextRoot, headLinks, detectedFramework);
       await buildPreviewApp(runtimeRoot, detectedFramework);
+      rebuildSuccess = true;
     } catch (err: any) {
       console.warn(`[preview] Rebuild failed: ${err.message}`);
       return;
     }
 
     // Only send WebSocket reload for React mode - Vue uses Vite HMR
-    if (detectedFramework === 'react') {
+    if (rebuildSuccess && detectedFramework === 'react') {
       wss.clients.forEach((client) => {
         if (client.readyState === 1) {
           client.send(JSON.stringify({ type: 'reload', file: filename }));
