@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Batch + Vue3 + Agent
 status: planning
-last_updated: "2026-05-23"
-last_activity: "2026-05-23"
+last_updated: "2026-05-25"
+last_activity: "2026-05-25"
 progress:
   total_phases: 3
   completed_phases: 0
@@ -122,7 +122,11 @@ Plans:
 7. Agent stops if token budget exceeds limit (e.g., 50k tokens) and reports budget exceeded
 8. Agent reports a confidence score (0-100%) for each repaired component
 
-**Plans:** TBD
+**Plans:** 1/2 plans executed
+
+Plans:
+- [x] 08-01-PLAN.md — Wave 1: LangGraph dependencies, agent directory structure, StateGraph with 4 nodes, all 5 tools, verifier agent, history manager
+- [ ] 08-02-PLAN.md — Wave 2: CLI integration with --agent flag, agent.run() wiring, confidence score display
 
 ---
 
@@ -132,7 +136,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 6. Batch Glob Processing | 1/1 | Complete    | 2026-05-23 |
 | 7. Vue 3 SFC Output | 0/3 | Not started | - |
-| 8. Autonomous Agent | 0/10 | Not started | - |
+| 8. Autonomous Agent | 1/2 | In Progress|  |
 
 ## Traceability
 
@@ -173,4 +177,4 @@ All v1.1 requirements mapped to phases:
 
 ---
 
-*Last updated: 2026-05-23*
+*Last updated: 2026-05-25*
