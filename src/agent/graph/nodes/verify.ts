@@ -7,7 +7,7 @@
  */
 
 import type { AgentState } from '../state.js';
-import { verifyOutputTool } from '../../tools/verify.js';
+import { verifyOutput } from '../../tools/verify.js';
 
 /**
  * VERIFY node function.
@@ -32,7 +32,7 @@ export async function verifyNode(state: AgentState): Promise<Partial<AgentState>
   console.log(`------------------\n`);
 
   try {
-    const result = await verifyOutputTool({ htmlPath: input_path, componentPath: output_path });
+    const result = await verifyOutput(input_path, output_path);
 
     console.log(`\n--- VERIFY RESULT ---`);
     console.log(`Match: ${result.match}`);

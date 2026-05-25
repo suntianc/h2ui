@@ -4,8 +4,6 @@
  * @module agent/graph/state
  */
 
-import { TypedDict } from '@langchain/core/ts_types';
-
 /**
  * Phase of the agent execution loop.
  */
@@ -14,7 +12,7 @@ export type AgentPhase = 'PLAN' | 'EXECUTE' | 'VERIFY' | 'REPAIR' | 'DONE';
 /**
  * State maintained throughout the agent's PLAN -> EXECUTE -> VERIFY -> REPAIR loop.
  */
-export interface AgentState extends TypedDict {
+export interface AgentState {
   /** Conversation messages between agent and tools */
   messages: Array<{
     role: 'user' | 'assistant' | 'tool';

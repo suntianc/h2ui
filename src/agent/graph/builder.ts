@@ -7,7 +7,7 @@
  */
 
 import { StateGraph } from '@langchain/langgraph';
-import { MemorySaver } from '@langchain/langgraph/checkpointing';
+import { MemorySaver } from '@langchain/langgraph-checkpoint';
 import type { AgentState, AgentInput } from './state.js';
 import { planNode } from './nodes/plan.js';
 import { executeNode } from './nodes/execute.js';
@@ -49,23 +49,18 @@ function buildGraph() {
       execution_result: null,
     },
   })
-    .addNode('plan', planNode, {
-      ends: ['execute'],
-    })
-    .addNode('execute', executeNode, {
-      ends: ['verify'],
-    })
-    .addNode('verify', verifyNode, {
-      ends: ['repair', '__end__'],
-    })
-    .addNode('repair', repairNode, {
-      ends: ['execute'],
-    })
+    .addNode('plan', planNode)
+    .addNode('execute', executeNode)
+    .addNode('verify', verifyNode)
+    .addNode('repair', repairNode)
     .addEdge('__start__', 'plan')
+    .addEdge('plan', 'execute')
+    .addEdge('execute', 'verify')
     .addConditionalEdges('verify', shouldRepair, {
       repair: 'repair',
       end: '__end__',
-    });
+    })
+    .addEdge('repair', 'execute');
 
   return workflow.compile({
     checkpointer: new MemorySaver(),
@@ -95,9 +90,10 @@ export async function runAgent(input: AgentInput): Promise<AgentState> {
     execution_result: null,
   };
 
-  const result = await app.invoke(initialState, {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await app.invoke(initialState as any, {
     configurable: { thread_id: input.thread_id },
-  });
+  }) as AgentState;
 
   return result;
 }

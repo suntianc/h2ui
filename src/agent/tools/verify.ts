@@ -63,31 +63,42 @@ function structuralDiff(html: string, jsx: string): { match: boolean; issues: st
 }
 
 /**
+ * Core verification function - used directly by nodes.
+ */
+export async function verifyOutput(
+  htmlPath: string,
+  componentPath: string
+): Promise<VerifyResult> {
+  try {
+    const { html, jsx } = await loadFiles(htmlPath, componentPath);
+
+    const { match, issues } = structuralDiff(html, jsx);
+
+    // Calculate confidence based on issues
+    const confidence = match ? 0.9 : Math.max(0, 0.9 - issues.length * 0.1);
+
+    return {
+      match,
+      confidence,
+      issues,
+    };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    return {
+      match: false,
+      confidence: 0,
+      issues: [`Error verifying output: ${errorMsg}`],
+    };
+  }
+}
+
+/**
  * Tool for verifying that component output matches source HTML.
+ * For LLM tool binding.
  */
 export const verifyOutputTool = tool(
   async ({ htmlPath, componentPath }: { htmlPath: string; componentPath: string }): Promise<VerifyResult> => {
-    try {
-      const { html, jsx } = await loadFiles(htmlPath, componentPath);
-
-      const { match, issues } = structuralDiff(html, jsx);
-
-      // Calculate confidence based on issues
-      const confidence = match ? 0.9 : Math.max(0, 0.9 - issues.length * 0.1);
-
-      return {
-        match,
-        confidence,
-        issues,
-      };
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      return {
-        match: false,
-        confidence: 0,
-        issues: [`Error verifying output: ${errorMsg}`],
-      };
-    }
+    return verifyOutput(htmlPath, componentPath);
   },
   {
     name: 'verify_output',

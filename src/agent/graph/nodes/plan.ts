@@ -7,6 +7,7 @@
  */
 
 import type { AgentState } from '../state.js';
+import { createAnthropicClient } from '../../../llm/providers/anthropic.js';
 
 /**
  * System prompt for the PLAN node.
@@ -20,9 +21,6 @@ Your plan should:
 4. Note any complex nested structures that may need special handling
 
 Output your plan as a concise, structured list visible to the user.`;
-
-import { ChatAnthropic } from '@langchain/anthropic';
-import { createAnthropicClient } from '../../../llm/providers/anthropic.js';
 
 /**
  * PLAN node function.
@@ -50,17 +48,11 @@ export async function planNode(state: AgentState): Promise<Partial<AgentState>> 
     };
   }
 
-  // Create LLM client
+  // Create LLM client using project's existing provider
   const config = { provider: 'anthropic' as const, model: 'claude-sonnet-4-6' };
   const client = createAnthropicClient(config);
 
   // Generate plan
-  const model = new ChatAnthropic({
-    model: 'claude-sonnet-4-6',
-    temperature: 0,
-    maxTokens: 4096,
-  });
-
   const response = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 4096,

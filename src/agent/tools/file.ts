@@ -12,12 +12,31 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 /**
+ * Read a file from the filesystem.
+ */
+export async function readFile(filePath: string): Promise<string> {
+  const content = await fs.readFile(filePath, 'utf-8');
+  return content;
+}
+
+/**
+ * Write content to a file on the filesystem.
+ */
+export async function writeFile(filePath: string, content: string): Promise<string> {
+  // Ensure parent directory exists
+  const dir = path.dirname(filePath);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(filePath, content, 'utf-8');
+  return `Written ${content.length} characters to ${filePath}`;
+}
+
+/**
  * Tool for reading a file from the filesystem.
+ * For LLM tool binding.
  */
 export const readFileTool = tool(
   async ({ filePath }: { filePath: string }) => {
-    const content = await fs.readFile(filePath, 'utf-8');
-    return content;
+    return readFile(filePath);
   },
   {
     name: 'read_file',
@@ -30,14 +49,11 @@ export const readFileTool = tool(
 
 /**
  * Tool for writing content to a file.
+ * For LLM tool binding.
  */
 export const writeFileTool = tool(
   async ({ filePath, content }: { filePath: string; content: string }) => {
-    // Ensure parent directory exists
-    const dir = path.dirname(filePath);
-    await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(filePath, content, 'utf-8');
-    return `Written ${content.length} characters to ${filePath}`;
+    return writeFile(filePath, content);
   },
   {
     name: 'write_file',

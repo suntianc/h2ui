@@ -7,8 +7,7 @@
  */
 
 import type { AgentState } from '../state.js';
-import { createAnthropicClient } from '../../../llm/providers/anthropic.js';
-import { readFileTool, writeFileTool, runPipelineTool } from '../../tools/file.js';
+import { runPipeline } from '../../tools/pipeline.js';
 
 /**
  * System prompt for the EXECUTE node.
@@ -47,7 +46,7 @@ export async function executeNode(state: AgentState): Promise<Partial<AgentState
 
   try {
     // Run the pipeline
-    const result = await runPipelineTool({ inputPath: input_path, outputPath: output_path });
+    const result = await runPipeline(input_path, output_path);
 
     console.log(`\n--- EXECUTE COMPLETE ---`);
     console.log(result);
