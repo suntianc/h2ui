@@ -76,10 +76,14 @@ function resolveRootComponentName(outputDir: string, framework: Framework): stri
   return path.basename(files[0], path.extname(files[0]));
 }
 
-function syncOutputFiles(outputDir: string, componentsDir: string): void {
+function syncOutputFiles(outputDir: string, componentsDir: string, framework: Framework): void {
   ensureDir(componentsDir);
   const files = fs.readdirSync(outputDir);
   for (const file of files) {
+    // Skip .tsx/.jsx files in Vue mode - they contain React imports that vue() plugin cannot resolve
+    if (framework === 'vue' && (file.endsWith('.tsx') || file.endsWith('.jsx'))) {
+      continue;
+    }
     if (
       file.endsWith('.tsx') ||
       file.endsWith('.jsx') ||
@@ -133,7 +137,7 @@ function writePreviewApp(
 </html>
 `;
     mainContent = `import { createApp } from 'vue';
-import RootComponent from './components/${rootComponentName}';
+import RootComponent from './components/${rootComponentName}.vue';
 
 createApp(RootComponent).mount('#root');
 `;
@@ -218,7 +222,7 @@ export async function startPreviewServer(
   console.log(`[preview] Framework: ${frameworkMode === 'auto' ? `auto (detected ${detectedFramework})` : frameworkMode}`);
 
   ensureDir(runtimeRoot);
-  syncOutputFiles(outputDir, componentsDir);
+  syncOutputFiles(outputDir, componentsDir, detectedFramework);
   const rootComponentName = resolveRootComponentName(outputDir, detectedFramework);
   const headLinks = readHeadLinks(outputDir);
   writePreviewApp(runtimeRoot, rootComponentName, headLinks, detectedFramework);
@@ -260,7 +264,7 @@ export async function startPreviewServer(
 
     let rebuildSuccess = false;
     try {
-      syncOutputFiles(outputDir, componentsDir);
+      syncOutputFiles(outputDir, componentsDir, detectedFramework);
       const nextRoot = resolveRootComponentName(outputDir, detectedFramework);
       const headLinks = readHeadLinks(outputDir);
       writePreviewApp(runtimeRoot, nextRoot, headLinks, detectedFramework);

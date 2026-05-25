@@ -540,8 +540,11 @@ export const convertStep: PipelineStep = {
       } else {
         // ── Single-component mode (fallback) ──
         if (isVue) {
-          // Vue single-component mode
-          const vueTemplate = renderVueTemplate(ctx.$, ctx.$.root()[0], newCtx.warnings);
+          // Vue single-component mode - extract body content, not full document root
+          const bodyEl = ctx.$('body');
+          const vueTemplate = bodyEl.length > 0
+            ? renderVueTemplate(ctx.$, bodyEl[0], newCtx.warnings)
+            : renderVueTemplate(ctx.$, ctx.$.root()[0], newCtx.warnings);
           return { ...newCtx, code: vueTemplate, vueTemplate };
         } else {
           // React single-component mode

@@ -82,9 +82,10 @@ function generateVueSFC(
   scriptLines.push('</script>');
   blocks.push(scriptLines.join('\n'));
 
-  // Add template block
+  // Add template block - strip <body> wrapper if present (body is not valid Vue template root)
+  const templateContent = template.replace(/^<body[^>]*>/, '').replace(/<\/body>\s*$/, '');
   blocks.push(`<template>`);
-  blocks.push(`  ${template}`);
+  blocks.push(`  ${templateContent.trim()}`);
   blocks.push(`</template>`);
 
   // Add style scoped block if there are CSS properties
