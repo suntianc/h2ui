@@ -28,6 +28,8 @@
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.97.1",
+    "@langchain/langgraph": "^0.3.2",
+    "@langchain/core": "^0.3.32",
     "cheerio": "^1.2.0",
     "commander": "^12.1.0",
     "cosmiconfig": "^9.0.1",
