@@ -3,7 +3,6 @@ import type { Element } from 'domhandler';
 import type { PipelineStep, PipelineContext, ComponentNode } from '../../types/pipeline.js';
 import { isSemanticTag, tagToComponentName, getMeaningfulClasses, hasDistinctPattern } from './semantic.js';
 import { findRepeatedPatterns, type DetectedPattern } from './signature.js';
-import { showComponentTree } from '../../cli/output.js';
 import { flattenTree } from '../../util/tree.js';
 
 /**
@@ -112,9 +111,6 @@ export const splitStep: PipelineStep = {
       root.name = toPascalCase(filename);
 
       const flatList = flattenTree(root);
-
-      // Display tree in console
-      showComponentTree(root);
 
       return {
         ...newCtx,
