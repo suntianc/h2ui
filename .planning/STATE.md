@@ -55,7 +55,7 @@ Plan: 3 of 3
 
 | Metric | Value | Notes |
 |--------|-------|-------|
-| Requirements | 17 | BATCH-01..07, VUE-01..07 (AGENT cancelled) |
+| Requirements | 14 | BATCH-01..07, VUE-01..07 (LLM and AGENT cancelled) |
 | Phases | 2 | Batch, Vue |
 | Phase length | TBD | Per-phase planning needed |
 
@@ -71,6 +71,7 @@ Plan: 3 of 3
 - Batch defaults to sequential processing (avoid API rate limits)
 - Bounded concurrency max of 4 (prevent resource exhaustion)
 - Agent capability cancelled - no longer in scope
+- LLM functionality removed - pure rule-based conversion only
 
 ### Blockers
 
