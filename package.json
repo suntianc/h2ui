@@ -1,7 +1,7 @@
 {
   "name": "h2ui-cli",
   "version": "1.0.0",
-  "description": "Convert HTML pages to React components",
+  "description": "Convert HTML pages to React/Vue components",
   "type": "module",
   "main": "./dist/src/cli/index.js",
   "bin": {
@@ -13,13 +13,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "npm run build",
-    "test-llm": "tsx verify-work/test_llm.ts",
     "test-schema": "tsx verify-work/test_schema.ts",
     "convert-test": "tsx src/cli/index.ts convert verify-work/dashboard.html --out verify-work/output"
   },
   "keywords": [
     "html",
     "react",
+    "vue",
     "jsx",
     "tsx",
     "converter",
@@ -27,19 +27,15 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.97.1",
     "cheerio": "^1.2.0",
     "commander": "^12.1.0",
     "cosmiconfig": "^9.0.1",
     "css-tree": "^3.2.1",
     "dotenv": "^17.4.2",
     "fast-glob": "^3.3.3",
-    "openai": "^6.38.0",
     "ora": "^9.4.0",
     "p-limit": "^7.3.0",
-    "prettier": "^3.8.3",
-    "tiktoken": "^1.0.22",
-    "zod": "^3.25.76"
+    "prettier": "^3.8.3"
   },
   "devDependencies": {
     "@types/css-tree": "^2.3.11",

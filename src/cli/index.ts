@@ -11,25 +11,25 @@ const program = new Command();
 
 program
   .name('h2ui')
-  .description('Convert HTML pages to React components')
+  .description('Convert HTML pages to React/Vue components using rule-based parsing')
   .version('1.0.0')
   .addHelpText('after', `
 Examples:
   # Initialize the configuration scaffold
   $ h2ui init
 
-  # Convert an HTML file to React TSX using default options (LLM enabled)
+  # Convert an HTML file to React TSX
   $ h2ui convert index.html
 
-  # Convert with LLM disabled, outputting to a specific directory
-  $ h2ui convert dashboard.html --out ./src/components --llm off
+  # Convert with Vue 3 output
+  $ h2ui convert page.html --framework vue3 --out ./components
 
   # Start the live reload preview server
   $ h2ui preview --out ./h2ui_output --port 3000
 
 Config File:
   By default, h2ui looks for a ".h2uirc" file in the current working directory to customize
-  output paths, TypeScript options, and LLM configuration (such as base URL and API keys).
+  output paths, TypeScript options, and framework settings.
 `);
 
 program
@@ -40,16 +40,14 @@ program
   .option('--type <type>', 'output file type: tsx or jsx (default: tsx)', /^(tsx|jsx)$/, 'tsx')
   .option('--no-split', 'disable component splitting (single-file output)')
   .option('--strict', 'promote all warnings to errors')
-  .option('--llm <mode>', 'LLM mode: on or off (default: on)', (value) => value !== 'off' ? 'on' : 'off', 'on')
   .option('--framework <framework>', 'target framework: react or vue3 (default: react)', /^(react|vue3)$/, 'react')
   .addHelpText('after', `
 Examples:
   $ h2ui convert path/to/index.html
   $ h2ui convert dashboard.html --out ./components --type jsx --no-split
-  $ h2ui convert page.html --llm off
   $ h2ui convert page.html --framework vue3
 `)
-  .action(async (file: string, options: { out?: string; type?: string; strict?: boolean; split?: boolean; llm?: string; framework?: 'react' | 'vue3' }) => {
+  .action(async (file: string, options: { out?: string; type?: string; strict?: boolean; split?: boolean; framework?: 'react' | 'vue3' }) => {
     showBanner();
     const { config: configFile } = await loadConfig();
     await convertCommand(file, options, configFile);
@@ -66,14 +64,13 @@ program
   }, 1)
   .option('--no-split', 'disable component splitting')
   .option('--strict', 'promote all warnings to errors')
-  .option('--llm <mode>', 'LLM mode: on or off (default: on)')
   .addHelpText('after', `
 Examples:
   $ h2u batch "src/**/*.html"
   $ h2u batch "pages/*.html" --out ./components --concurrency 4
   $ h2u batch "*.html" --no-split
 `)
-  .action(async (pattern: string, options: { out?: string; concurrency?: number; split?: boolean; strict?: boolean; llm?: string }) => {
+  .action(async (pattern: string, options: { out?: string; concurrency?: number; split?: boolean; strict?: boolean }) => {
     showBanner();
     const { config: configFile } = await loadConfig();
     const result = await batchCommand(pattern, options, configFile);

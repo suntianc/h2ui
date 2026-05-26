@@ -1,5 +1,4 @@
 import type { CheerioAPI } from 'cheerio';
-import type { LLMConfig } from './config.js';
 
 export interface ConvertOptions {
   out: string;
@@ -7,8 +6,6 @@ export interface ConvertOptions {
   strict: boolean;
   split: boolean;
   cssMode: 'module' | 'scoped' | 'inline' | 'global';
-  /** LLM review configuration per D-10 */
-  llm?: LLMConfig;
   /** Framework target: 'react' (default) or 'vue3' */
   framework?: 'react' | 'vue3';
 }
@@ -30,25 +27,6 @@ export interface PipelineContext {
   repeatedPatterns?: Map<string, import('domhandler').Element[]>;
   components?: ComponentOutput[];
   cssFiles?: CSSFile[];
-
-  // Phase 4: LLM Integration
-  llmResult?: {
-    approved: boolean;
-    boundary_changes: Array<{ component_id: string; action: 'confirm' | 'reject' | 'modify'; reason: string }>;
-    naming_suggestions: Array<{ original: string; suggested: string; rationale: string }>;
-    cleanup_hints: string[];
-    /** Modified components from llm-modify (now unified in llm-fidelity) */
-    components?: Array<{ name: string; code: string; rationale: string }>;
-    /** Fidelity report from llm-fidelity step */
-    fidelity_report?: {
-      structure_match: boolean;
-      attribute_preservation: Array<{ component: string; missing_attributes: string[] }>;
-      text_content_match: boolean;
-      css_preservation: boolean;
-      fidelity_notes: string[];
-    };
-    _fallback?: boolean | null; // null = LLM call failed, undefined = not set
-  };
 }
 
 export interface PipelineStep {

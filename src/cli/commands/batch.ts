@@ -4,8 +4,8 @@ import fg from 'fast-glob';
 import pLimit from 'p-limit';
 import { convertCommand } from './convert.js';
 import type { ConvertOptions, PipelineContext } from '../../types/pipeline.js';
-import type { H2uiConfig, LLMConfig } from '../../types/config.js';
-import { DEFAULT_OPTIONS, DEFAULT_LLM_CONFIG } from '../../config/defaults.js';
+import type { H2uiConfig } from '../../types/config.js';
+import { DEFAULT_OPTIONS } from '../../config/defaults.js';
 
 // ============================================================================
 // Types
@@ -32,7 +32,6 @@ export interface BatchCommandOptions {
   concurrency?: number;
   split?: boolean;
   strict?: boolean;
-  llm?: string;
 }
 
 export async function batchCommand(
@@ -122,18 +121,6 @@ async function runPipelineForBatch(
     cssMode: configFile.cssMode ?? DEFAULT_OPTIONS.cssMode,
   };
 
-  // Merge LLM config
-  let llmConfig: LLMConfig | undefined;
-  if (options.llm !== 'off') {
-    llmConfig = {
-      provider: (configFile.llm?.provider ?? DEFAULT_LLM_CONFIG.provider) as LLMConfig['provider'],
-      model: configFile.llm?.model ?? DEFAULT_LLM_CONFIG.model,
-      mode: configFile.llm?.mode ?? 'auto',
-      baseURL: configFile.llm?.baseURL,
-      apiKey: configFile.llm?.apiKey,
-    };
-  }
-
   // Resolve paths
   const inputPath = path.resolve(file);
   const outputDir = path.resolve(mergedConfig.out);
@@ -164,12 +151,6 @@ async function runPipelineForBatch(
     pipeline.addStep(convertStep);
   }
 
-  // Add LLM fidelity step if enabled
-  if (llmConfig && llmConfig.mode !== 'off') {
-    const { llmFidelityStep } = await import('../../pipeline/steps/llm-fidelity.js');
-    pipeline.addStep(llmFidelityStep);
-  }
-
   pipeline.addStep(generateStep);
 
   // Run pipeline directly (no process.exit)
@@ -181,7 +162,7 @@ async function runPipelineForBatch(
     outputPath,
     warnings: [],
     errors: [],
-    options: { ...mergedConfig, out: outputDir, llm: llmConfig },
+    options: { ...mergedConfig, out: outputDir },
   });
 
   return ctx;

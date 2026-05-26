@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ora from 'ora';
 import type { ConvertOptions } from '../../types/pipeline.js';
-import type { H2uiConfig, LLMConfig } from '../../types/config.js';
-import { DEFAULT_OPTIONS, DEFAULT_LLM_CONFIG } from '../../config/defaults.js';
+import type { H2uiConfig } from '../../types/config.js';
+import { DEFAULT_OPTIONS } from '../../config/defaults.js';
 import { showError, showSuccess, showWarningSummary, showComponentTree } from '../output.js';
 import { suggestSimilarFiles } from '../../util/suggest.js';
 
@@ -14,9 +14,7 @@ export async function convertCommand(
     type?: string;
     strict?: boolean;
     split?: boolean;
-    llm?: string;
     framework?: 'react' | 'vue3';
-    llmConfig?: LLMConfig;  // For programmatic callers passing LLMConfig directly
   },
   configFile: Partial<H2uiConfig> = {},
 ): Promise<void> {
@@ -42,27 +40,9 @@ export async function convertCommand(
     typescript: (options.type ?? 'tsx') === 'tsx',
     strict: options.strict !== undefined ? options.strict : (configFile.strict ?? DEFAULT_OPTIONS.strict),
     split: options.split !== undefined ? options.split : (configFile.split ?? DEFAULT_OPTIONS.split),
-    // Note: If --css-mode CLI flag is added in future, update to:
-    // cssMode: options.cssMode ?? configFile.cssMode ?? DEFAULT_OPTIONS.cssMode
     cssMode: configFile.cssMode ?? DEFAULT_OPTIONS.cssMode,
     framework: options.framework ?? configFile.framework ?? 'react',
   };
-
-  // Merge LLM config: programmatic llmConfig > CLI --llm flag > config file > defaults
-  // LLM enabled by default unless --llm off is specified
-  let llmConfig: LLMConfig | undefined;
-  if (options.llmConfig) {
-    // Programmatic caller passed LLMConfig directly (CR-01 fix)
-    llmConfig = options.llmConfig;
-  } else if (options.llm !== 'off') {
-    llmConfig = {
-      provider: (configFile.llm?.provider ?? DEFAULT_LLM_CONFIG.provider) as LLMConfig['provider'],
-      model: configFile.llm?.model ?? DEFAULT_LLM_CONFIG.model,
-      mode: configFile.llm?.mode ?? 'auto',
-      baseURL: configFile.llm?.baseURL,
-      apiKey: configFile.llm?.apiKey,
-    };
-  }
 
   // Resolve paths
   const inputPath = path.resolve(file);
@@ -91,12 +71,6 @@ export async function convertCommand(
     pipeline.addStep(convertStep);
   }
 
-  // Add unified LLM fidelity step BEFORE generateStep so results can influence output
-  if (llmConfig && llmConfig.mode !== 'off') {
-    const { llmFidelityStep } = await import('../../pipeline/steps/llm-fidelity.js');
-    pipeline.addStep(llmFidelityStep);
-  }
-
   pipeline.addStep(generateStep);
 
   // Run pipeline
@@ -108,7 +82,7 @@ export async function convertCommand(
     outputPath: undefined,
     warnings: [],
     errors: [],
-    options: { ...mergedConfig, out: outputDir, llm: llmConfig },
+    options: { ...mergedConfig, out: outputDir },
   });
 
   // Handle strict mode
@@ -148,58 +122,6 @@ export async function convertCommand(
       const fileCount = ctx.components.length;
       console.log(`\n\x1b[32m✓\x1b[0m Wrote ${fileCount} files to ${mergedConfig.out}`);
       showComponentTree(ctx.componentTree);
-
-      // Display LLM review results if available
-      if (ctx.llmResult) {
-        console.log('\n--- LLM Review ---');
-
-        if (ctx.llmResult._fallback) {
-          console.log('[llm] Warning: LLM review was unavailable, using rules-only output');
-        } else {
-          if (ctx.llmResult.naming_suggestions && ctx.llmResult.naming_suggestions.length > 0) {
-            console.log('\nNaming suggestions:');
-            for (const s of ctx.llmResult.naming_suggestions) {
-              console.log(`  ${s.original} -> ${s.suggested}: ${s.rationale}`);
-            }
-          }
-
-          if (ctx.llmResult.cleanup_hints && ctx.llmResult.cleanup_hints.length > 0) {
-            console.log('\nCleanup hints:');
-            for (const h of ctx.llmResult.cleanup_hints) {
-              console.log(`  - ${h}`);
-            }
-          }
-
-          if (ctx.llmResult.boundary_changes && ctx.llmResult.boundary_changes.length > 0) {
-            console.log('\nBoundary changes:');
-            for (const b of ctx.llmResult.boundary_changes) {
-              console.log(`  ${b.action.toUpperCase()} ${b.component_id}: ${b.reason}`);
-            }
-          }
-
-          if (ctx.llmResult.fidelity_report) {
-            const fr = ctx.llmResult.fidelity_report;
-            console.log('\nFidelity Report:');
-            console.log(`  Structure match: ${fr.structure_match ? '✓' : '✗'}`);
-            console.log(`  Text content match: ${fr.text_content_match ? '✓' : '✗'}`);
-            console.log(`  CSS preservation: ${fr.css_preservation ? '✓' : '✗'}`);
-            if (fr.attribute_preservation.length > 0) {
-              console.log('  Missing attributes:');
-              for (const ap of fr.attribute_preservation) {
-                if (ap.missing_attributes.length > 0) {
-                  console.log(`    ${ap.component}: ${ap.missing_attributes.join(', ')}`);
-                }
-              }
-            }
-            if (fr.fidelity_notes.length > 0) {
-              console.log('  Notes:');
-              for (const note of fr.fidelity_notes) {
-                console.log(`    - ${note}`);
-              }
-            }
-          }
-        }
-      }
     } else {
       showSuccess(ctx.outputPath);
     }
