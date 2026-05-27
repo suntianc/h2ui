@@ -12,7 +12,7 @@ const program = new Command();
 program
   .name('h2ui')
   .description('Convert HTML pages to React/Vue components using rule-based parsing')
-  .version('1.1.1')
+  .version('1.1.2')
   .addHelpText('after', `
 Examples:
   # Initialize the configuration scaffold

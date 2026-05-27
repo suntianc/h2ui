@@ -1,7 +1,7 @@
 import type { ComponentNode } from '../types/pipeline.js';
 
 export function showBanner(): void {
-  console.log('h2ui v1.1.1 — HTML to React/Vue Component Converter');
+  console.log('h2ui v1.1.2 — HTML to React/Vue Component Converter');
   console.log('');
 }
 

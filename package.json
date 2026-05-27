@@ -1,6 +1,6 @@
 {
   "name": "h2ui-cli",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Convert HTML pages to React/Vue components with batch processing, component splitting, and live preview server",
   "type": "module",
   "main": "./dist/src/cli/index.js",
@@ -28,6 +28,8 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitejs/plugin-vue": "^6.0.7",
     "cheerio": "^1.2.0",
     "commander": "^12.1.0",
     "cosmiconfig": "^9.0.1",
@@ -37,6 +39,8 @@
     "ora": "^9.4.0",
     "p-limit": "^7.3.0",
     "prettier": "^3.8.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "vite": "^6.0.0",
     "ws": "^8.20.1"
   },
@@ -47,10 +51,6 @@
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@types/ws": "^8.18.1",
-    "@vitejs/plugin-react": "^4.7.0",
-    "@vitejs/plugin-vue": "^6.0.7",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "tsx": "^4.22.3",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
