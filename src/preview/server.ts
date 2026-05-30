@@ -2,6 +2,7 @@ import { build as viteBuild, preview as vitePreview } from 'vite';
 import react from '@vitejs/plugin-react';
 import vue from '@vitejs/plugin-vue';
 import { WebSocketServer, type WebSocket } from 'ws';
+import { createRequire } from 'module';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -189,10 +190,23 @@ root.render(<RootComponent />);
 }
 
 async function buildPreviewApp(appRoot: string, framework: Framework = 'react'): Promise<void> {
+  // Resolve dependencies from h2ui-cli's own node_modules when user's project doesn't have them
+  const _require = createRequire(import.meta.url);
+  const h2uiNodeModules = path.dirname(path.dirname(_require.resolve('react/package.json')));
+
+  const alias: Record<string, string> = {};
+  if (framework === 'vue') {
+    alias.vue = path.join(h2uiNodeModules, 'vue');
+  } else {
+    alias.react = path.join(h2uiNodeModules, 'react');
+    alias['react-dom'] = path.join(h2uiNodeModules, 'react-dom');
+  }
+
   await viteBuild({
     root: appRoot,
     plugins: framework === 'vue' ? [vue()] : [react()],
     logLevel: 'warn',
+    resolve: { alias },
     build: {
       outDir: path.join(appRoot, 'dist'),
       emptyOutDir: true,
